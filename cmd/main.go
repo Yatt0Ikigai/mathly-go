@@ -5,10 +5,12 @@ import (
 	"mathly/internal/log"
 	"mathly/internal/repository"
 	"mathly/internal/service"
+	"mathly/internal/sockets"
 
 	"net/http"
 	"time"
 
+	"mathly/internal/controllers"
 	"mathly/internal/controllers/auth"
 
 	"github.com/gin-contrib/cors"
@@ -33,8 +35,20 @@ func main() {
 	repositories := repository.NewRepositories(databases)
 	service := service.NewService(c.Services)
 
-	r := gin.Default()
+	lobbyManager := sockets.NewLobbyManager()
+	lobbySockets := controllers.NewLobbySockets(controllers.LobbySocketsControllerParameters{
+		Service:      service,
+		Databases:    databases,
+		LobbyManager: lobbyManager,
+	})
 
+	lobbyRest := controllers.NewLobbyController(controllers.LobbyControllerParameters{
+		Service:      service,
+		Databases:    databases,
+		LobbyManager: lobbyManager,
+	})
+
+	r := gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowMethods:     []string{"GET", "POST"},
 		AllowHeaders:     []string{"Content-Type", "Content-Length", "Accept-Encoding", "Authorization", "Cache-Control"},
@@ -48,6 +62,8 @@ func main() {
 
 	oAuthController := auth.NewOAuthController(repositories.User(), service.JWT(), c.OAuth)
 	oAuthController.InitGoogleOAuth(r)
+	lobbySockets.RegisterLobbyHandlers(r)
+	lobbyRest.RegisterLobbyRestHandlers(r)
 
 	httpServer := &http.Server{
 		Addr:              ":8080",
