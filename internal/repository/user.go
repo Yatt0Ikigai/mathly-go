@@ -31,8 +31,8 @@ func (u *user) GetByEmail(email string) (*models.User, error) {
 	err := row.Scan(
 		&user.ID,
 		&user.Email,
-		&user.Hash,
 		&user.Nickname,
+		&user.Hash,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)

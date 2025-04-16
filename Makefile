@@ -28,4 +28,3 @@ test-report:
 it: export TEST_TYPE = IT
 it:
 	ginkgo --race ./internal/repository/...
-	ginkgo --race --focus-file="it_test.go" ./service/ 

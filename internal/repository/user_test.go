@@ -5,13 +5,14 @@ import (
 	"mathly/internal/repository"
 	// "time"
 
-	// "github.com/google/uuid"
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("User", Ordered, func() {
+	ID, _ := uuid.Parse("96c46ea4-3144-43fe-ab86-aab9f5c8de17")
 	var (
 		databases      repository.Databases
 		userRepository repository.User
@@ -33,9 +34,10 @@ var _ = Describe("User", Ordered, func() {
 		_, err := databases.DB().Query("DELETE from users")
 		Expect(err).To(BeNil())
 		_, err = databases.DB().Query(`
-		INSERT INTO users (id, email, nickname, password_hash, created_at, updated_at) VALUES (
-			'id', 'a@gmail.com', 'nickname', 'hash', NOW(), NOW()
-		);`)
+			INSERT INTO users (id, email, nickname, password_hash, created_at, updated_at) VALUES (
+				'96c46ea4-3144-43fe-ab86-aab9f5c8de17', 'a@gmail.com', 'nickname', 'hash', NOW(), NOW()
+			);
+		`)
 		Expect(err).To(BeNil())
 	})
 
@@ -46,7 +48,8 @@ var _ = Describe("User", Ordered, func() {
 			user, err := userRepository.GetByEmail("a@gmail.com")
 			// then
 			Expect(err).To(BeNil())
-			Expect(user.ID).To(Equal("id"))
+			Expect(user).NotTo(BeNil())
+			Expect(user.ID).To(Equal(ID))
 			Expect(user.Email).To(Equal("a@gmail.com"))
 			Expect(user.Hash).To(Equal("hash"))
 			Expect(user.Nickname).To(Equal("nickname"))

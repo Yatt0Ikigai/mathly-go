@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"mathly/internal/config"
 	"mathly/internal/log"
 	"mathly/internal/repository"
@@ -25,21 +24,14 @@ func main() {
 	if err != nil {
 		log.Log.Fatalf("Couldn't create databases - reason: %s", err.Error())
 	}
+
 	err = databases.DB().Health()
 	if err != nil {
-		fmt.Printf("ERROR AAAA: %v", err)
 		return
-	}
-	fmt.Printf("TO JEST OK")
-	_, err = databases.DB().Query("select * from information_schema.tables")
-	if err != nil {
-		fmt.Printf("ERROR AAAA: %v", err)
 	}
 
 	repositories := repository.NewRepositories(databases)
 	service := service.NewService(c.Services)
-	
-
 
 	r := gin.Default()
 

@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	_ "github.com/lib/pq"
 	"mathly/internal/infrastructure"
 	"strings"
 )
