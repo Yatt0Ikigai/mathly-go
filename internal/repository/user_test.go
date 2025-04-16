@@ -2,7 +2,10 @@ package repository_test
 
 import (
 	// "mathly/internal/models"
+	"mathly/internal/models"
 	"mathly/internal/repository"
+	"time"
+
 	// "time"
 
 	"github.com/google/uuid"
@@ -65,29 +68,29 @@ var _ = Describe("User", Ordered, func() {
 		})
 	})
 
-	// Describe("Insert", func() {
-	// 	It("Insert should find a create new user by id in the db", func() {
-	// 		// given
-	// 		u := models.User{
-	// 			ID:        uuid.Max,
-	// 			Email:     "some-email@gmail.com",
-	// 			Nickname:  "Yatt0",
-	// 			Hash:      "AAAAA",
-	// 			CreatedAt: time.Now(),
-	// 			UpdatedAt: time.Now(),
-	// 		}
-	// 		// when
-	// 		user, err := userRepository.Insert(&u)
-	// 		// then
-	// 		Expect(err).To(BeNil())
-	// 		dbUser, err := userRepository.GetByEmail(user.Email)
-	// 		Expect(err).To(BeNil())
-	// 		Expect(dbUser.ID).To(Equal(u.ID))
-	// 		Expect(dbUser.Email).To(Equal(u.Email))
-	// 		Expect(dbUser.Hash).To(Equal(u.Hash))
-	// 		Expect(dbUser.Nickname).To(Equal(u.Nickname))
-	// 		Expect(dbUser.Nickname).To(Equal(u.Nickname))
-	// 		Expect(dbUser.Nickname).To(Equal(u.Nickname))
-	// 	})
-	// })
+	Describe("Insert", func() {
+		It("Insert should find a create new user by id in the db", func() {
+			// given
+			u := models.User{
+				ID:        uuid.Max,
+				Email:     "some-email@gmail.com",
+				Nickname:  "Yatt0",
+				Hash:      "AAAAA",
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+			// when
+			user, err := userRepository.Insert(&u)
+			// then
+			Expect(err).To(BeNil())
+			dbUser, err := userRepository.GetByEmail(user.Email)
+			Expect(err).To(BeNil())
+			Expect(dbUser.ID).To(Equal(u.ID))
+			Expect(dbUser.Email).To(Equal(u.Email))
+			Expect(dbUser.Hash).To(Equal(u.Hash))
+			Expect(dbUser.Nickname).To(Equal(u.Nickname))
+			Expect(dbUser.Nickname).To(Equal(u.Nickname))
+			Expect(dbUser.Nickname).To(Equal(u.Nickname))
+		})
+	})
 })

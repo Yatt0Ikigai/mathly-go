@@ -52,14 +52,14 @@ func (u *user) Insert(user *models.User) (models.User, error) {
 	INSERT INTO users (
 		id, email, nickname, password_hash, created_at, updated_at
 	) VALUES (
-		?, ?, ?, ?, ?, ?
+		$1, $2, $3, $4, $5, $6
 	);`,
 		user.ID.String(),
 		user.Email,
 		user.Nickname,
 		user.Hash,
-		user.CreatedAt.String(),
-		user.UpdatedAt.String(),
+		user.CreatedAt,
+		user.UpdatedAt,
 	)
 
 	if err != nil {
