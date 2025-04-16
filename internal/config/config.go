@@ -5,44 +5,22 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mathly/internal/repository"
+	"mathly/internal/service"
 	"os"
 	"path"
 )
 
 type Configuration struct {
-	Databases Databases `json:"databases"`
-	OAuth     AuthOAuth `json:"authOAuth"`
+	Databases repository.DatabasesConfig `json:"databases"`
+	OAuth     AuthOAuth                  `json:"authOAuth"`
+	Services  service.ServiceConfig      `json:"services"`
 }
 
 type AuthOAuth struct {
 	ClientID     string `json:"clientID"`
 	ClientSecret string `json:"clientSecret"`
 	CallbackURL  string `json:"callbackURL"`
-}
-
-type Databases struct {
-	Redis RedisConfig `json:"redis"`
-	SQL   SQLConfig   `json:"sql"`
-}
-
-type RedisConfig struct {
-	Host string `json:"host"`
-	Port string `json:"port"`
-
-	DB       string `json:"db"`
-	User     string `json:"user"`
-	Password string `json:"password"`
-	Schema   string `json:"schema"`
-}
-
-type SQLConfig struct {
-	Host string `json:"host"`
-	Port string `json:"port"`
-
-	DB       string `json:"db"`
-	User     string `json:"user"`
-	Password string `json:"password"`
-	Schema   string `json:"schema"`
 }
 
 func new() *Configuration {
@@ -83,9 +61,9 @@ func readConfigurationFromJson() (*Configuration, error) {
 func getConfigPath() (string, error) {
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath == "" {
-		configPath = "config.dev.json"
+		configPath = "./configuration/config.json"
 	}
-	
+
 	if !path.IsAbs(configPath) {
 		workingDirectory, err := os.Getwd()
 		if err != nil {

@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: mathly
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+      - ./configuration/:/configuration/
+    command: go run cmd/service/main.go
+    image: cosmtrek/air:latest
+    working_dir: /app
+    ports:
+      - 8080:8080
+
+  db:
+    image: postgres:latest
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    healthcheck:
+      test: ["CMD", "mysql", "-u", "root", "-proot", "-e", "SELECT 1"]
+      timeout: 20s
+      retries: 10
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./seed:/docker-entrypoint-initdb.d
+
+volumes:
+  postgres_data:
+    driver: local

@@ -27,4 +27,4 @@ vendor/
 
 .tool-versions
 
-config.*.json
+config*.json

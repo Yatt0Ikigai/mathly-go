@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"mathly/internal/config"
 	"mathly/internal/log"
+	"mathly/internal/repository"
+	"mathly/internal/service"
 
 	"net/http"
 	"time"
@@ -17,6 +20,27 @@ func main() {
 	log.InitLogger()
 
 	c := config.AppConfig
+
+	databases, err := repository.NewDatabases(&c.Databases)
+	if err != nil {
+		log.Log.Fatalf("Couldn't create databases - reason: %s", err.Error())
+	}
+	err = databases.DB().Health()
+	if err != nil {
+		fmt.Printf("ERROR AAAA: %v", err)
+		return
+	}
+	fmt.Printf("TO JEST OK")
+	_, err = databases.DB().Query("select * from information_schema.tables")
+	if err != nil {
+		fmt.Printf("ERROR AAAA: %v", err)
+	}
+
+	repositories := repository.NewRepositories(databases)
+	service := service.NewService(c.Services)
+	
+
+
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -30,7 +54,8 @@ func main() {
 
 	r.Use(CORSMiddleware())
 
-	auth.InitGoogleOAuth(r, c.OAuth)
+	oAuthController := auth.NewOAuthController(repositories.User(), service.JWT(), c.OAuth)
+	oAuthController.InitGoogleOAuth(r)
 
 	httpServer := &http.Server{
 		Addr:              ":8080",
