@@ -1,9 +1,12 @@
 package sockets
 
 import (
+	"encoding/json"
 	"fmt"
+	"mathly/internal/log"
 	"mathly/internal/models"
 	"mathly/internal/service"
+	"mathly/internal/sockets/games"
 
 	"github.com/google/uuid"
 )
@@ -13,11 +16,18 @@ type Lobby interface {
 	GetOwnerID() uuid.UUID
 	GetClientBySocketID(socketID uuid.UUID) Client
 	GetPlayersNicknamesWithout(string) []string
+	GetPlayers() []models.Player
 
 	JoinLobby(Client)
 	LeaveLobby(Client)
 
-	ForwardMessage(Message)
+	ForwardMessage(models.Message)
+	BroadcastMessage([]byte)
+
+	handleJoin(c Client)
+	handleLeave(c Client)
+	handleMessage(msg models.Message)
+	handleLobbyMessage(msg models.Message)
 }
 
 type lobby struct {
@@ -27,23 +37,18 @@ type lobby struct {
 
 	Join      chan Client
 	Leave     chan Client
-	Forward   chan Message
+	Forward   chan models.Message
 	Broadcast chan []byte
 
 	Clients map[Client]bool
 
-	Game         *models.Game
+	Game         games.Game
 	LobbyHandler service.LobbyHandler
 
 	Settings Settings
 }
 
 type Settings struct{}
-
-type Message struct {
-	SocketID uuid.UUID
-	Data     []byte
-}
 
 func NewLobby(services service.Service) Lobby {
 	id := uuid.New()
@@ -52,7 +57,7 @@ func NewLobby(services service.Service) Lobby {
 	l := lobby{
 		ID: id,
 
-		Forward:   make(chan Message, maxMessageAmount),
+		Forward:   make(chan models.Message, maxMessageAmount),
 		Join:      make(chan Client),
 		Leave:     make(chan Client),
 		Clients:   make(map[Client]bool),
@@ -70,13 +75,11 @@ func (l *lobby) run() {
 	for {
 		select {
 		case client := <-l.Join:
-			l.Clients[client] = true
+			l.handleJoin(client)
 		case client := <-l.Leave:
-			delete(l.Clients, client)
-			client.Close()
+			l.handleLeave(client)
 		case msg := <-l.Forward:
-			fmt.Println("Action From: ", msg.SocketID, " Data: ", msg.Data)
-			l.Broadcast <- msg.Data
+			l.handleMessage(msg)
 		case msg := <-l.Broadcast:
 			for c := range l.Clients {
 				c.SendMessage(msg)
@@ -89,8 +92,12 @@ func (l *lobby) GetID() uuid.UUID {
 	return l.ID
 }
 
-func (l *lobby) ForwardMessage(msg Message) {
+func (l *lobby) ForwardMessage(msg models.Message) {
 	l.Forward <- msg
+}
+
+func (l *lobby) BroadcastMessage(msg []byte) {
+	l.Broadcast <- msg
 }
 
 func (l *lobby) JoinLobby(c Client) {
@@ -122,6 +129,19 @@ func (l *lobby) GetPlayersNicknamesWithout(nickname string) []string {
 	return opponents
 }
 
+func (l *lobby) GetPlayers() []models.Player {
+	var players []models.Player
+
+	for c := range l.Clients {
+		players = append(players, models.Player{
+			ConnectionID: c.GetID(),
+			Nickname:     c.GetNickname(),
+		})
+	}
+
+	return players
+}
+
 func (l *lobby) GetClientBySocketID(socketID uuid.UUID) Client {
 	for c := range l.Clients {
 		if c.GetID() == socketID {
@@ -129,4 +149,48 @@ func (l *lobby) GetClientBySocketID(socketID uuid.UUID) Client {
 		}
 	}
 	return nil
+}
+
+func (l *lobby) handleJoin(c Client) {
+	var playerJoinMessage, returnPlayerIDMessage []byte
+	l.Broadcast <- fmt.Appendf(playerJoinMessage, "New Player %s Joined", c.GetNickname())
+	c.SendMessage(fmt.Appendf(returnPlayerIDMessage, "%s", c.GetID().String()))
+	l.Clients[c] = true
+}
+
+func (l *lobby) handleLeave(c Client) {
+	delete(l.Clients, c)
+	c.Close()
+	var playerLeftMessage []byte
+	l.Broadcast <- fmt.Appendf(playerLeftMessage, "Player %s Left", c.GetNickname())
+}
+
+func (l *lobby) handleMessage(msg models.Message) {
+	
+	if msg.Type == models.MessageTypeLobby {
+		l.handleLobbyMessage(msg)
+	}
+	if msg.Type == models.MessageTypeGame && l.Game != nil {
+		l.Game.HandleMessage(msg)
+	}
+}
+
+type LobbyMessage struct {
+	Type string
+}
+
+func (l *lobby) handleLobbyMessage(msg models.Message) {
+	var command LobbyMessage
+	if msg.SenderID == l.GetOwnerID() {
+		err := json.Unmarshal([]byte(msg.Data), &command)
+		if err != nil {
+			log.Log.Infof(`Couldn't unmarshal command: %v`, err)
+			return
+		}
+
+		if command.Type == "StartGame" {
+			l.Game = games.InitMathOperationsGame(games.GameConfig{}, l.GetPlayers(), l.ForwardMessage, l.BroadcastMessage)
+			l.Game.StartTheGame()
+		}
+	}
 }
