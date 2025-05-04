@@ -7,6 +7,8 @@ import (
 	"mathly/internal/models"
 	"mathly/internal/service"
 	"mathly/internal/sockets/games"
+	"mathly/internal/sockets/games/math_operations"
+	"mathly/internal/sockets/games/utils"
 
 	"github.com/google/uuid"
 )
@@ -42,7 +44,7 @@ type lobby struct {
 
 	Clients map[Client]bool
 
-	Game         games.Game
+	Game         utils.Game
 	LobbyHandler service.LobbyHandler
 
 	Settings Settings
@@ -136,6 +138,7 @@ func (l *lobby) GetPlayers() []models.Player {
 		players = append(players, models.Player{
 			ConnectionID: c.GetID(),
 			Nickname:     c.GetNickname(),
+			Receiver:     c.GetReceiver(),
 		})
 	}
 
@@ -166,12 +169,12 @@ func (l *lobby) handleLeave(c Client) {
 }
 
 func (l *lobby) handleMessage(msg models.Message) {
-	
+
 	if msg.Type == models.MessageTypeLobby {
 		l.handleLobbyMessage(msg)
 	}
 	if msg.Type == models.MessageTypeGame && l.Game != nil {
-		l.Game.HandleMessage(msg)
+		l.Game.HandleMessage(msg.SenderID, msg.Data)
 	}
 }
 
@@ -189,7 +192,7 @@ func (l *lobby) handleLobbyMessage(msg models.Message) {
 		}
 
 		if command.Type == "StartGame" {
-			l.Game = games.InitMathOperationsGame(games.GameConfig{}, l.GetPlayers(), l.ForwardMessage, l.BroadcastMessage)
+			l.Game = math_operations.InitMathOperationsGame(games.GameConfig{}, l.GetPlayers(), l.ForwardMessage, l.BroadcastMessage)
 			l.Game.StartTheGame()
 		}
 	}

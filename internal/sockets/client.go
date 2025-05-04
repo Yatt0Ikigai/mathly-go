@@ -13,8 +13,11 @@ import (
 
 type Client interface {
 	SendMessage([]byte)
-	GetID() uuid.UUID
+
 	GetNickname() string
+	GetID() uuid.UUID
+	GetReceiver() chan []byte
+
 	Close()
 }
 
@@ -105,3 +108,5 @@ func (c *client) GetID() uuid.UUID {
 func (c *client) GetNickname() string {
 	return c.Nickname
 }
+
+func (c *client) GetReceiver() chan []byte { return c.Receive }

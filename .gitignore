@@ -28,3 +28,5 @@ vendor/
 .tool-versions
 
 config*.json
+
+.idea/
