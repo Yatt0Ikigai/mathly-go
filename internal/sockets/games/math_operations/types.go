@@ -7,12 +7,12 @@ import (
 
 type MathQuestion struct {
 	Question      string
-	Answers       []int
-	correctAnswer int
+	Answers       []string
+	correctAnswer string
 }
 
 func (m MathQuestion) String() string {
-	r, err := json.Marshal(m.Answers)
+	r, err := json.Marshal(m)
 	if err != nil {
 		log.Log.Errorf(`Failed to marshal Math Question: %v`, err)
 		return ""

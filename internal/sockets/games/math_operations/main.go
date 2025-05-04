@@ -16,26 +16,25 @@ type MathOperations interface {
 	broadcastQuestion()
 
 	generateAdditionQuestion() MathQuestion
+	handleAnswer(msg models.Message)
 }
 
 type mathOperations struct {
-	config           utils.GameConfig
-	forwardMessage   func(models.Message)
-	broadcastMessage func([]byte)
-	questions        []MathQuestion
-	players          []models.Player
-	scoreBoard       map[models.Player]int
-	playerQuestion   map[models.Player]int
+	config         utils.GameConfig
+	broadcast      chan []byte
+	questions      []MathQuestion
+	players        []models.Player
+	scoreBoard     map[models.Player]int
+	playerQuestion map[models.Player]int
 }
 
-func InitMathOperationsGame(c utils.GameConfig, players []models.Player, fM func(models.Message), bM func([]byte)) MathOperations {
+func InitMathOperationsGame(c utils.GameConfig, players []models.Player, broadcast chan []byte) MathOperations {
 	m := mathOperations{
-		config:           c,
-		broadcastMessage: bM,
-		forwardMessage:   fM,
-		players:          players,
-		scoreBoard:       make(map[models.Player]int),
-		playerQuestion:   make(map[models.Player]int),
+		config:         c,
+		broadcast:      broadcast,
+		players:        players,
+		scoreBoard:     make(map[models.Player]int),
+		playerQuestion: make(map[models.Player]int),
 	}
 
 	for _, player := range players {
@@ -46,14 +45,13 @@ func InitMathOperationsGame(c utils.GameConfig, players []models.Player, fM func
 	return m
 }
 
-func InitMockOperationsGame(c utils.GameConfig, players []models.Player, fM func(models.Message), bM func([]byte)) MathOperations {
+func InitMockOperationsGame(c utils.GameConfig, players []models.Player, broadcast chan []byte) mathOperations {
 	m := mathOperations{
-		config:           c,
-		broadcastMessage: bM,
-		forwardMessage:   fM,
-		players:          players,
-		scoreBoard:       make(map[models.Player]int),
-		playerQuestion:   make(map[models.Player]int),
+		config:         c,
+		broadcast:      broadcast,
+		players:        players,
+		scoreBoard:     make(map[models.Player]int),
+		playerQuestion: make(map[models.Player]int),
 	}
 
 	for _, player := range players {

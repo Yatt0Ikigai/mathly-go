@@ -25,7 +25,7 @@ func (m mathOperations) broadcastStartOfGame() {
 	}
 
 	msg, _ := message.ToByteArray()
-	m.broadcastMessage(msg)
+	m.broadcast <- msg
 }
 
 func (m mathOperations) broadcastScoreboard() {
@@ -40,7 +40,7 @@ func (m mathOperations) broadcastScoreboard() {
 	}
 
 	msg, _ := message.ToByteArray()
-	m.broadcastMessage(msg)
+	m.broadcast <- msg
 }
 
 func (m mathOperations) broadcastQuestion() {
@@ -51,7 +51,7 @@ func (m mathOperations) broadcastQuestion() {
 	}
 
 	msg, _ := message.ToByteArray()
-	m.broadcastMessage(msg)
+	m.broadcast <- msg
 }
 
 func (m mathOperations) generateAdditionQuestion() MathQuestion {
@@ -61,10 +61,10 @@ func (m mathOperations) generateAdditionQuestion() MathQuestion {
 
 	question := fmt.Sprintf(`What's the sum of %d + %d ?`, numberOne, numberTwo)
 
-	answers := make([]int, 0)
-	answers = append(answers, result)
+	answers := make([]string, 0)
+	answers = append(answers, fmt.Sprintf("%d", result))
 	for range 3 {
-		answers = append(answers, result+m.config.Random.Intn(100)-50)
+		answers = append(answers, fmt.Sprintf("%d", (result+m.config.Random.Intn(100)-50)))
 	}
 	rand.Shuffle(len(answers), func(i, j int) {
 		answers[i], answers[j] = answers[j], answers[i]
@@ -72,7 +72,7 @@ func (m mathOperations) generateAdditionQuestion() MathQuestion {
 	return MathQuestion{
 		Question:      question,
 		Answers:       answers,
-		correctAnswer: result,
+		correctAnswer: fmt.Sprintf("%d", result),
 	}
 }
 
@@ -94,24 +94,22 @@ func (m mathOperations) findPlayerById(id uuid.UUID) *models.Player {
 	return nil
 }
 
-func (m mathOperations) HandleMessage(id uuid.UUID, msg string) {
-	// TODO tez do podmiany bardziej generic metoda potrzebna
-	var uMsg UserMessage
-
-	err := json.Unmarshal([]byte(msg), &uMsg)
-	if err != nil {
-		// TODO
-	}
-
-	switch uMsg.Type {
-	case PlayerTypeAnswer:
-		m.handleAnswer(id, uMsg)
+func (m mathOperations) HandleMessage(msg models.Message) {
+	switch msg.Action {
+	case models.ActionTypeGuessAnswer:
+		m.handleAnswer(msg)
 	}
 }
 
-func (m mathOperations) handleAnswer(id uuid.UUID, msg UserMessage) {
-	p := m.findPlayerById(id)
+func (m mathOperations) handleAnswer(msg models.Message) {
+	p := m.findPlayerById(msg.SenderID)
 	if p == nil {
+		return // TODO
+	}
+
+	var data UserMessageData
+	err := json.Unmarshal([]byte(msg.Data), &data)
+	if err != nil {
 		return // TODO
 	}
 
@@ -119,7 +117,7 @@ func (m mathOperations) handleAnswer(id uuid.UUID, msg UserMessage) {
 	// TODO later check if it wasn't last question
 	nextQuestion := m.questions[m.playerQuestion[*p]+1]
 
-	if question.correctAnswer == msg.Answer {
+	if question.correctAnswer == data.Answer {
 		m.scoreBoard[*p]++
 		m.broadcastScoreboard()
 	} else {

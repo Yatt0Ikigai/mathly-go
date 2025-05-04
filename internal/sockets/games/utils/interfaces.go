@@ -1,8 +1,10 @@
 package utils
 
-import "github.com/google/uuid"
+import (
+	"mathly/internal/models"
+)
 
 type Game interface {
 	StartTheGame()
-	HandleMessage(userID uuid.UUID, msg string)
+	HandleMessage(models.Message)
 }

@@ -1,9 +1,7 @@
 package sockets
 
 import (
-	"encoding/json"
 	"fmt"
-	"mathly/internal/log"
 	"mathly/internal/models"
 	"mathly/internal/service"
 	"mathly/internal/sockets/games/math_operations"
@@ -168,30 +166,21 @@ func (l *lobby) handleLeave(c Client) {
 }
 
 func (l *lobby) handleMessage(msg models.Message) {
-
 	if msg.Type == models.MessageTypeLobby {
 		l.handleLobbyMessage(msg)
 	}
 	if msg.Type == models.MessageTypeGame && l.Game != nil {
-		l.Game.HandleMessage(msg.SenderID, msg.Data)
+		l.Game.HandleMessage(msg)
+	}
+	if msg.Type == models.MessageTypeLobby {
+		// TODO
 	}
 }
 
-type LobbyMessage struct {
-	Type string
-}
-
 func (l *lobby) handleLobbyMessage(msg models.Message) {
-	var command LobbyMessage
 	if msg.SenderID == l.GetOwnerID() {
-		err := json.Unmarshal([]byte(msg.Data), &command)
-		if err != nil {
-			log.Log.Infof(`Couldn't unmarshal command: %v`, err)
-			return
-		}
-
-		if command.Type == "StartGame" {
-			l.Game = math_operations.InitMathOperationsGame(gameUtils.GameConfig{}, l.GetPlayers(), l.ForwardMessage, l.BroadcastMessage)
+		if msg.Action == models.ActionTypeStartGame {
+			l.Game = math_operations.InitMathOperationsGame(gameUtils.GameConfig{}, l.GetPlayers(), l.Broadcast)
 			l.Game.StartTheGame()
 		}
 	}
