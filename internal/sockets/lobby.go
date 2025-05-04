@@ -6,9 +6,8 @@ import (
 	"mathly/internal/log"
 	"mathly/internal/models"
 	"mathly/internal/service"
-	"mathly/internal/sockets/games"
 	"mathly/internal/sockets/games/math_operations"
-	"mathly/internal/sockets/games/utils"
+	gameUtils "mathly/internal/sockets/games/utils"
 
 	"github.com/google/uuid"
 )
@@ -44,7 +43,7 @@ type lobby struct {
 
 	Clients map[Client]bool
 
-	Game         utils.Game
+	Game         gameUtils.Game
 	LobbyHandler service.LobbyHandler
 
 	Settings Settings
@@ -192,7 +191,7 @@ func (l *lobby) handleLobbyMessage(msg models.Message) {
 		}
 
 		if command.Type == "StartGame" {
-			l.Game = math_operations.InitMathOperationsGame(games.GameConfig{}, l.GetPlayers(), l.ForwardMessage, l.BroadcastMessage)
+			l.Game = math_operations.InitMathOperationsGame(gameUtils.GameConfig{}, l.GetPlayers(), l.ForwardMessage, l.BroadcastMessage)
 			l.Game.StartTheGame()
 		}
 	}

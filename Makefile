@@ -16,8 +16,7 @@ mocks:
 	go generate ./...
 
 test:
-	ginkgo ./internal
-	ginkgo ./actions
+	ginkgo ./...
 
 e2e-test:
 	godotenv -f .env.staging ginkgo ./cmd
