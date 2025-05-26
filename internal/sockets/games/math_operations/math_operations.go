@@ -10,11 +10,11 @@ import (
 )
 
 func (m mathOperations) StartTheGame() {
-	for range 10 {
-		m.questions = append(m.questions, m.generateAdditionQuestion())
-	}
+	fmt.Println("Starting the game")
 	m.broadcastStartOfGame()
+	fmt.Println("Scoreboard")
 	m.broadcastScoreboard()
+	fmt.Println("Questions")
 	m.broadcastQuestion()
 }
 
@@ -55,7 +55,9 @@ func (m mathOperations) broadcastQuestion() {
 }
 
 func (m mathOperations) generateAdditionQuestion() MathQuestion {
+	fmt.Println("Generating addition question")
 	numberOne := m.config.Random.Intn(1000) - 500
+	fmt.Println("Generating addition second question")
 	numberTwo := m.config.Random.Intn(1000) - 500
 	result := numberOne + numberTwo
 

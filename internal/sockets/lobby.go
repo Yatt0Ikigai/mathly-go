@@ -6,6 +6,7 @@ import (
 	"mathly/internal/service"
 	"mathly/internal/sockets/games/math_operations"
 	gameUtils "mathly/internal/sockets/games/utils"
+	"mathly/internal/utils"
 
 	"github.com/google/uuid"
 )
@@ -174,13 +175,17 @@ func (l *lobby) handleMessage(msg models.Message) {
 	}
 	if msg.Type == models.MessageTypeLobby {
 		// TODO
+		fmt.Println("Asad")
 	}
 }
 
 func (l *lobby) handleLobbyMessage(msg models.Message) {
 	if msg.SenderID == l.GetOwnerID() {
 		if msg.Action == models.ActionTypeStartGame {
-			l.Game = math_operations.InitMathOperationsGame(gameUtils.GameConfig{}, l.GetPlayers(), l.Broadcast)
+			l.Game = math_operations.InitMathOperationsGame(gameUtils.GameConfig{
+				Random:          utils.NewRandom(),
+				MessageListener: l.Forward,
+			}, l.GetPlayers(), l.Broadcast)
 			l.Game.StartTheGame()
 		}
 	}

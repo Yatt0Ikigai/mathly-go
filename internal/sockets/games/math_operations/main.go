@@ -42,6 +42,11 @@ func InitMathOperationsGame(c utils.GameConfig, players []models.Player, broadca
 		m.playerQuestion[player] = 0
 	}
 
+	m.questions = make([]MathQuestion, 0, 10)
+	for range 10 {
+		m.questions = append(m.questions, m.generateAdditionQuestion())
+	}
+
 	return m
 }
 

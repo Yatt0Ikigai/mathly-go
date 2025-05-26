@@ -1,3 +1,7 @@
 [build]
-  # Build binary.
-  cmd = "go build -o ./tmp/main ./cmd"
+cmd = "go build -o ./tmp/main ./cmd"
+bin = "tmp/main"
+include_ext = ["go", "tpl", "tmpl", "html"]
+exclude_dir = ["vendor", "tmp", "bin", ".git"]
+exclude_file = ["air.toml"]
+delve = false
