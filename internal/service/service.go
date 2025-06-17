@@ -1,3 +1,4 @@
+//go:generate mockgen -source=service.go -package service -destination=service_mock.go
 package service
 
 type ServiceConfig struct {

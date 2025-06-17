@@ -62,8 +62,6 @@ func NewLobby(services service.Service) Lobby {
 		Leave:     make(chan Client),
 		Clients:   make(map[Client]bool),
 		Broadcast: make(chan []byte, maxMessageAmount),
-
-		LobbyHandler: services.LobbyHandler(),
 	}
 
 	go l.run()
@@ -153,6 +151,10 @@ func (l *lobby) GetClientBySocketID(socketID uuid.UUID) Client {
 }
 
 func (l *lobby) handleJoin(c Client) {
+	if l.Owner == nil {
+		l.Owner = c
+	}
+	
 	var playerJoinMessage, returnPlayerIDMessage []byte
 	l.Broadcast <- fmt.Appendf(playerJoinMessage, "New Player %s Joined", c.GetNickname())
 	c.SendMessage(fmt.Appendf(returnPlayerIDMessage, "%s", c.GetID().String()))
