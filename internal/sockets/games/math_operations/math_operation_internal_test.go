@@ -121,7 +121,7 @@ var _ = Describe("User", Ordered, func() {
 			msg := <-playerOneReceiver
 			Expect(string(msg)).To(Equal("{\"Question\":\"Q2\",\"Answers\":[\"D\",\"C\"]}"))
 			msg = <-broadcast
-			Expect(string(msg)).To(Equal("{\"Type\":\"Scoreboard\",\"Message\":\"🏆 Scoreboard:\\nTest: 1\\nTestTwo: 0\\n\"}"))
+			Expect(string(msg)).To(Equal("{\"Type\":\"Scoreboard\",\"Message\":\"{\\\"Test\\\":1,\\\"TestTwo\\\":0}\"}"))
 
 			Expect(mathOperationGame.scoreBoard[playerOne]).To(Equal(1))
 			Expect(mathOperationGame.playerQuestion[playerOne]).To(Equal(1))
@@ -148,7 +148,7 @@ var _ = Describe("User", Ordered, func() {
 			msg := <-playerOneReceiver
 			Expect(string(msg)).To(Equal("{\"Question\":\"Q2\",\"Answers\":[\"D\",\"C\"]}"))
 			msg = <-broadcast
-			Expect(string(msg)).To(Equal("{\"Type\":\"Scoreboard\",\"Message\":\"🏆 Scoreboard:\\nTest: -1\\nTestTwo: 0\\n\"}"))
+			Expect(string(msg)).To(Equal("{\"Type\":\"Scoreboard\",\"Message\":\"{\\\"Test\\\":-1,\\\"TestTwo\\\":0}\"}"))
 
 			Expect(mathOperationGame.scoreBoard[playerOne]).To(Equal(-1))
 			Expect(mathOperationGame.playerQuestion[playerOne]).To(Equal(1))

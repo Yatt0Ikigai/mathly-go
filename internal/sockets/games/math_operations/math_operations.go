@@ -10,18 +10,17 @@ import (
 )
 
 func (m mathOperations) StartTheGame() {
-	fmt.Println("Starting the game")
+	fmt.Println("IAM STARTING A GAME")
 	m.broadcastStartOfGame()
-	fmt.Println("Scoreboard")
+	fmt.Println("SCORE")
 	m.broadcastScoreboard()
-	fmt.Println("Questions")
+	fmt.Println("QUESTIOn")
 	m.broadcastQuestion()
 }
 
 func (m mathOperations) broadcastStartOfGame() {
 	message := utils.GameMessage{
-		Type:    utils.LobbyEventStartOfGame.String(),
-		Message: "",
+		Type: utils.LobbyEventStartOfGame.String(),
 	}
 
 	msg, _ := message.ToByteArray()
@@ -29,14 +28,16 @@ func (m mathOperations) broadcastStartOfGame() {
 }
 
 func (m mathOperations) broadcastScoreboard() {
-	scoreboard := "🏆 Scoreboard:\n"
+	scoreboard := map[string]int{}
 	for player, score := range m.scoreBoard {
-		scoreboard += fmt.Sprintf("%s: %d\n", player.Nickname, score)
+		scoreboard[player.Nickname] = score
 	}
 
+	marshaledScoreboard, _ := json.Marshal(scoreboard)
+	fmt.Printf("Scoreboard %s", string(marshaledScoreboard))
 	message := utils.GameMessage{
 		Type:    utils.LobbyEventScoreboard.String(),
-		Message: scoreboard,
+		Message: string(marshaledScoreboard),
 	}
 
 	msg, _ := message.ToByteArray()
@@ -55,9 +56,7 @@ func (m mathOperations) broadcastQuestion() {
 }
 
 func (m mathOperations) generateAdditionQuestion() MathQuestion {
-	fmt.Println("Generating addition question")
 	numberOne := m.config.Random.Intn(1000) - 500
-	fmt.Println("Generating addition second question")
 	numberTwo := m.config.Random.Intn(1000) - 500
 	result := numberOne + numberTwo
 
@@ -129,4 +128,12 @@ func (m mathOperations) handleAnswer(msg models.Message) {
 
 	m.playerQuestion[*p]++
 	p.SendMessage(nextQuestion.String())
+}
+
+func (m mathOperations) GetRightAnswer(q *int) string {
+	qNumber := 0
+	if q != nil {
+		qNumber = *q
+	}
+	return m.questions[qNumber].correctAnswer
 }

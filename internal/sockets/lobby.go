@@ -17,6 +17,7 @@ type Lobby interface {
 	GetClientBySocketID(socketID uuid.UUID) Client
 	GetPlayersNicknamesWithout(string) []string
 	GetPlayers() []models.Player
+	GetGame() gameUtils.Game
 
 	JoinLobby(Client)
 	LeaveLobby(Client)
@@ -79,6 +80,7 @@ func (l *lobby) run() {
 		case msg := <-l.Forward:
 			l.handleMessage(msg)
 		case msg := <-l.Broadcast:
+			fmt.Printf("SENDING MESSAGE %s", string(msg))
 			for c := range l.Clients {
 				c.SendMessage(msg)
 			}
@@ -141,6 +143,10 @@ func (l *lobby) GetPlayers() []models.Player {
 	return players
 }
 
+func (l *lobby) GetGame() gameUtils.Game {
+	return l.Game
+}
+
 func (l *lobby) GetClientBySocketID(socketID uuid.UUID) Client {
 	for c := range l.Clients {
 		if c.GetID() == socketID {
@@ -154,7 +160,7 @@ func (l *lobby) handleJoin(c Client) {
 	if l.Owner == nil {
 		l.Owner = c
 	}
-	
+
 	var playerJoinMessage, returnPlayerIDMessage []byte
 	l.Broadcast <- fmt.Appendf(playerJoinMessage, "New Player %s Joined", c.GetNickname())
 	c.SendMessage(fmt.Appendf(returnPlayerIDMessage, "%s", c.GetID().String()))

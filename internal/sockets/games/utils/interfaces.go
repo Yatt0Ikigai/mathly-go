@@ -7,4 +7,5 @@ import (
 type Game interface {
 	StartTheGame()
 	HandleMessage(models.Message)
+	GetRightAnswer(*int) string
 }
