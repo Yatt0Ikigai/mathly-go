@@ -68,9 +68,6 @@ var _ = Describe("Lobby", Ordered, func() {
 	It("new player joined lobby", func() {
 		// given
 		clientOneMock.EXPECT().SendMessage([]byte("New Player clientTwo Joined")).Times(1)
-		clientOneMock.EXPECT().SendMessage(gomock.Any()).AnyTimes().Do(func(a []byte) {
-			fmt.Printf("There's the message %s", a)
-		})
 
 		clientTwoMock.EXPECT().GetID().AnyTimes().Return(clientTwoId)
 		clientTwoMock.EXPECT().GetNickname().AnyTimes().Return("clientTwo")
@@ -119,7 +116,7 @@ var _ = Describe("Lobby", Ordered, func() {
 
 	It("first player correct guessed answers", func() {
 		// given
-		for i := range 10 {
+		for i := range 9 {
 			clientOneMock.EXPECT().SendMessage([]byte(fmt.Sprintf(`{"Type":"Scoreboard","Message":"{\"clientOne\":%d,\"clientTwo\":0}"}`, i+1))).Times(1)
 			clientOneMock.EXPECT().SendMessage(gomock.Any()).Times(1)
 			clientTwoMock.EXPECT().SendMessage([]byte(fmt.Sprintf(`{"Type":"Scoreboard","Message":"{\"clientOne\":%d,\"clientTwo\":0}"}`, i+1))).Times(1)
@@ -140,5 +137,26 @@ var _ = Describe("Lobby", Ordered, func() {
 				},
 			})
 		}
+	})
+
+	It("first player should miss answer", func() {
+		clientOneMock.EXPECT().SendMessage([]byte(`{"Type":"Scoreboard","Message":"{\"clientOne\":8,\"clientTwo\":0}"}`)).Times(1)
+		clientOneMock.EXPECT().SendMessage([]byte(`{"Type":"FinishedGame","Message":""}`)).Times(1)
+		clientTwoMock.EXPECT().SendMessage([]byte(`{"Type":"Scoreboard","Message":"{\"clientOne\":8,\"clientTwo\":0}"}`)).Times(1)
+
+		data := math_operations.UserMessageData{
+			Answer: "some-random-answer",
+		}
+		byteData, _ := json.Marshal(data)
+
+		// when
+		L.handleMessage(models.Message{
+			SenderID: clientOneId,
+			MessageDetails: models.MessageDetails{
+				Type:   models.MessageTypeGame,
+				Action: models.ActionTypeGuessAnswer,
+				Data:   string(byteData),
+			},
+		})
 	})
 })

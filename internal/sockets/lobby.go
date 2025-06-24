@@ -16,7 +16,7 @@ type Lobby interface {
 	GetOwnerID() uuid.UUID
 	GetClientBySocketID(socketID uuid.UUID) Client
 	GetPlayersNicknamesWithout(string) []string
-	GetPlayers() []models.Player
+	GetPlayers() map[uuid.UUID]models.Player
 	GetGame() gameUtils.Game
 
 	JoinLobby(Client)
@@ -80,7 +80,6 @@ func (l *lobby) run() {
 		case msg := <-l.Forward:
 			l.handleMessage(msg)
 		case msg := <-l.Broadcast:
-			fmt.Printf("SENDING MESSAGE %s", string(msg))
 			for c := range l.Clients {
 				c.SendMessage(msg)
 			}
@@ -129,15 +128,15 @@ func (l *lobby) GetPlayersNicknamesWithout(nickname string) []string {
 	return opponents
 }
 
-func (l *lobby) GetPlayers() []models.Player {
-	var players []models.Player
+func (l *lobby) GetPlayers() map[uuid.UUID]models.Player {
+	players := make(map[uuid.UUID]models.Player)
 
 	for c := range l.Clients {
-		players = append(players, models.Player{
+		players[c.GetID()] = models.Player{
 			ConnectionID: c.GetID(),
 			Nickname:     c.GetNickname(),
-			Receiver:     c.GetReceiver(),
-		})
+			SendMessage:  c.SendMessage,
+		}
 	}
 
 	return players
@@ -183,7 +182,6 @@ func (l *lobby) handleMessage(msg models.Message) {
 	}
 	if msg.Type == models.MessageTypeLobby {
 		// TODO
-		fmt.Println("Asad")
 	}
 }
 

@@ -19,3 +19,12 @@ func (m MathQuestion) String() string {
 	}
 	return string(r)
 }
+
+func (m MathQuestion) Byte() []byte {
+	r, err := json.Marshal(m)
+	if err != nil {
+		log.Log.Errorf(`Failed to marshal Math Question: %v`, err)
+		return []byte("")
+	}
+	return r
+}

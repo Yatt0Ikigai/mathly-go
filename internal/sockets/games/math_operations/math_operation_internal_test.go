@@ -14,6 +14,12 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+func mockSender(receiver chan []byte) func([]byte) {
+	return func(b []byte) {
+		receiver <- b
+	}
+}
+
 var _ = Describe("User", Ordered, func() {
 	playerOneReceiver := make(chan []byte, 10)
 	playerTwoReceiver := make(chan []byte, 10)
@@ -23,15 +29,18 @@ var _ = Describe("User", Ordered, func() {
 	playerOne := models.Player{
 		Nickname:     "Test",
 		ConnectionID: playerOneId,
-		Receiver:     playerOneReceiver,
+		SendMessage:  mockSender(playerOneReceiver),
 	}
 	playerTwo := models.Player{
 		Nickname:     "TestTwo",
 		ConnectionID: playerTwoId,
-		Receiver:     playerTwoReceiver,
+		SendMessage:  mockSender(playerTwoReceiver),
 	}
 
-	players := []models.Player{playerOne, playerTwo}
+	players := make(map[uuid.UUID]models.Player)
+	players[playerOneId] = playerOne
+	players[playerTwoId] = playerTwo
+
 	var (
 		broadcast         chan []byte
 		mathOperationGame mathOperations
@@ -108,7 +117,7 @@ var _ = Describe("User", Ordered, func() {
 			data, _ := json.Marshal(answer)
 
 			// when
-			mathOperationGame.handleAnswer(models.Message{
+			mathOperationGame.handleAnswerMessage(models.Message{
 				SenderID: playerOneId,
 				MessageDetails: models.MessageDetails{
 					Type:   models.MessageTypeGame,
@@ -123,8 +132,8 @@ var _ = Describe("User", Ordered, func() {
 			msg = <-broadcast
 			Expect(string(msg)).To(Equal("{\"Type\":\"Scoreboard\",\"Message\":\"{\\\"Test\\\":1,\\\"TestTwo\\\":0}\"}"))
 
-			Expect(mathOperationGame.scoreBoard[playerOne]).To(Equal(1))
-			Expect(mathOperationGame.playerQuestion[playerOne]).To(Equal(1))
+			Expect(mathOperationGame.scoreBoard[playerOne.ConnectionID]).To(Equal(1))
+			Expect(mathOperationGame.playerQuestion[playerOne.ConnectionID]).To(Equal(1))
 		})
 
 		It("should decrease user score and send new question", func() {
@@ -135,7 +144,7 @@ var _ = Describe("User", Ordered, func() {
 			data, _ := json.Marshal(answer)
 
 			// when
-			mathOperationGame.handleAnswer(models.Message{
+			mathOperationGame.handleAnswerMessage(models.Message{
 				SenderID: playerOneId,
 				MessageDetails: models.MessageDetails{
 					Type:   models.MessageTypeGame,
@@ -150,8 +159,8 @@ var _ = Describe("User", Ordered, func() {
 			msg = <-broadcast
 			Expect(string(msg)).To(Equal("{\"Type\":\"Scoreboard\",\"Message\":\"{\\\"Test\\\":-1,\\\"TestTwo\\\":0}\"}"))
 
-			Expect(mathOperationGame.scoreBoard[playerOne]).To(Equal(-1))
-			Expect(mathOperationGame.playerQuestion[playerOne]).To(Equal(1))
+			Expect(mathOperationGame.scoreBoard[playerOne.ConnectionID]).To(Equal(-1))
+			Expect(mathOperationGame.playerQuestion[playerOne.ConnectionID]).To(Equal(1))
 		})
 	})
 })
