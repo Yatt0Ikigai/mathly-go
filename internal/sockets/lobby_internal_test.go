@@ -99,10 +99,10 @@ var _ = Describe("Lobby", Ordered, func() {
 
 		clientOneMock.EXPECT().SendMessage([]byte(`{"Type":"StartOfGame","Message":""}`)).Times(1)
 		clientOneMock.EXPECT().SendMessage([]byte(`{"Type":"Scoreboard","Message":"{\"clientOne\":0,\"clientTwo\":0}"}`)).Times(1)
-	//	clientOneMock.EXPECT().SendMessage(gomock.Any()).Times(1)
+		clientOneMock.EXPECT().SendMessage(gomock.Any()).Times(1)
 		clientTwoMock.EXPECT().SendMessage([]byte(`{"Type":"StartOfGame","Message":""}`)).Times(1)
 		clientTwoMock.EXPECT().SendMessage([]byte(`{"Type":"Scoreboard","Message":"{\"clientOne\":0,\"clientTwo\":0}"}`)).Times(1)
-	//	clientTwoMock.EXPECT().SendMessage(gomock.Any()).Times(1)
+		clientTwoMock.EXPECT().SendMessage(gomock.Any()).Times(1)
 
 		// when
 		L.handleLobbyMessage(models.Message{

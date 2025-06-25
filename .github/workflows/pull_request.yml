@@ -26,6 +26,49 @@ jobs:
     - name: Run Ginkgo tests
       run: make test
 
+  it-test:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:24.0.2 # latest stable docker
+        options: --privileged
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+
+    - name: Set up Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install docker-compose -y
+
+    - name: Start database with docker-compose
+      run: docker-compose up -d
+
+    - name: Wait for DB to be ready
+      run: |
+        until docker-compose exec db pg_isready -U testuser; do
+          echo "Waiting for DB..."
+          sleep 2
+        done
+
+    - name: Install Go dependencies
+      run: go mod tidy
+
+    - name: Install Ginkgo CLI
+      run: go install github.com/onsi/ginkgo/v2/ginkgo@latest
+
+    - name: Add Go bin to PATH
+      run: echo "${HOME}/go/bin" >> $GITHUB_PATH
+
+    - name: Run Ginkgo tests
+      run: make it
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
