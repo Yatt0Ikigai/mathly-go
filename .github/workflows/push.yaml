@@ -2,11 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "master" ]
     paths:
       - '**.go'
   pull_request:
-    branches: [ "master" ]
     paths:
       - '**.go'
 jobs:
