@@ -48,7 +48,7 @@ jobs:
         sudo apt-get install docker-compose -y
 
     - name: Start database with docker-compose
-      run: docker-compose up -d
+      run: docker-compose up -d db
 
     - name: Wait for DB to be ready
       run: |
