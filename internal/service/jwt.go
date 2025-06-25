@@ -12,7 +12,7 @@ type TokenType string
 
 const (
 	Access  TokenType = "access"
-	Refresh           = "refresh"
+	Refresh TokenType = "refresh"
 )
 
 func (t TokenType) toString() string {
@@ -77,7 +77,7 @@ func (j *jwt) GenerateToken(user *models.User, tokenType TokenType) (string, err
 }
 
 func (j *jwt) ValidateToken(tokenString string, tokenType TokenType) (*models.Claims, error) {
-	token, err := jwtLib.ParseWithClaims(tokenString, &models.Claims{}, func(token *jwtLib.Token) (interface{}, error) {
+	token, err := jwtLib.ParseWithClaims(tokenString, &models.Claims{}, func(token *jwtLib.Token) (any, error) {
 		if _, ok := token.Method.(*jwtLib.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("invalid token signing method")
 		}
@@ -92,7 +92,7 @@ func (j *jwt) ValidateToken(tokenString string, tokenType TokenType) (*models.Cl
 		return nil, fmt.Errorf("invalid token")
 	}
 
-	if tokenType == Refresh && claims.Subject != Refresh {
+	if tokenType == Refresh && claims.Subject != string(Refresh) {
 		return nil, fmt.Errorf("invalid token")
 	}
 

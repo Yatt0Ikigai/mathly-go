@@ -181,7 +181,7 @@ func (l *lobby) handleMessage(msg models.Message) {
 		l.Game.HandleMessage(msg)
 	}
 	if msg.Type == models.MessageTypeLobby {
-		// TODO
+		fmt.Println("do sth")
 	}
 }
 

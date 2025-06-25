@@ -7,10 +7,10 @@ setup:
 
 
 lint:
-	golangci-lint run ./... --timeout 10m
+	golangci-lint run ./... --timeout 10m --concurrency=4 --skip-dirs=vendor
 
 lint-fix:
-	golangci-lint run ./... --fix
+	golangci-lint run ./... --fix --concurrency=4
 
 mocks:
 	go generate ./...

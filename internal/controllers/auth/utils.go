@@ -1,11 +1,9 @@
 package auth
 
 import (
-	// "github.com/google/uuid"
-	// "github.com/golang-jwt/jwt/v5"
+// "github.com/google/uuid"
+// "github.com/golang-jwt/jwt/v5"
 )
-
-
 
 func generateToken() {
 	// generateToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{

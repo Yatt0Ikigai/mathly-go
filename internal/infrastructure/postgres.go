@@ -10,8 +10,8 @@ import (
 
 type Postgres interface {
 	Close() error
-	Query(query string, args ...interface{}) (*sql.Rows, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
+	Query(query string, args ...any) (*sql.Rows, error)
+	QueryRow(query string, args ...any) *sql.Row
 
 	Health() error
 }
@@ -51,11 +51,11 @@ func (m postgres) Close() error {
 	return m.DB.Close()
 }
 
-func (m postgres) Query(query string, args ...interface{}) (*sql.Rows, error) {
+func (m postgres) Query(query string, args ...any) (*sql.Rows, error) {
 	return m.DB.Query(query, args...)
 }
 
-func (m postgres) QueryRow(query string, args ...interface{}) *sql.Row {
+func (m postgres) QueryRow(query string, args ...any) *sql.Row {
 	return m.DB.QueryRow(query, args...)
 }
 

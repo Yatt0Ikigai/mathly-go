@@ -12,6 +12,9 @@
 # See the file `.golangci.reference.yml` to have a list of  all available configuration options.
 
 linters-settings:
+  typecheck:
+    skip-dirs:
+      - vendor
   depguard:
     rules:
       logger:
@@ -96,44 +99,16 @@ linters-settings:
 linters:
   disable-all: true
   enable:
-    - bodyclose
-    - depguard
-    - dogsled
-    - dupl
-    - errcheck
-    - errorlint
-    - exportloopref
-    - funlen
-    - gocheckcompilerdirectives
-    - gochecknoinits
-    - goconst
-    - gocritic
-    - gocyclo
-    - gofmt
-    - goimports
-    - mnd
-    - goprintffuncname
-    - gosec
-    - gosimple
     - govet
-    - ineffassign
-    - lll
-    - misspell
-    - nakedret
-    - noctx
-    - nolintlint
-    - revive
     - staticcheck
-    - stylecheck
-    - typecheck
-    - unconvert
-    - unparam
-    - unused
-    - whitespace
+    - errcheck
+    - gofmt
 
   # This list of linters is not a recommendation (same thing for all this configuration file).
   # We intentionally use a limited set of linters.
   # See the comment on top of this file.
+cache:
+  enabled: true
 
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source

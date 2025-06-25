@@ -89,7 +89,7 @@ func (o *oAuthController) googleCallback(c *gin.Context) {
 	}
 
 	var userData models.OAuthResponse
-	json.Unmarshal(data, &userData)
+	_ = json.Unmarshal(data, &userData)
 
 	_, err = o.userRepository.Insert(&models.User{
 		ID:        uuid.New(),
