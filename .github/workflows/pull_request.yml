@@ -52,7 +52,7 @@ jobs:
 
     - name: Wait for DB to be ready
       run: |
-        until docker-compose exec db pg_isready -U testuser; do
+        until docker-compose exec -T db pg_isready -U myuser -d mydatabase; do
           echo "Waiting for DB..."
           sleep 2
         done
