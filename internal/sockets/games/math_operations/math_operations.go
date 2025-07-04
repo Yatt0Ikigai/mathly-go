@@ -3,10 +3,12 @@ package math_operations
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"math/rand"
 	"mathly/internal/models"
+	"mathly/internal/shared"
 	"mathly/internal/sockets/games/utils"
+
+	"github.com/google/uuid"
 )
 
 func (m mathOperations) StartTheGame() {
@@ -17,7 +19,7 @@ func (m mathOperations) StartTheGame() {
 
 func (m mathOperations) broadcastStartOfGame() {
 	message := utils.GameMessage{
-		Type: utils.LobbyEventStartOfGame.String(),
+		Type: shared.LobbyEventStartOfGame.String(),
 	}
 
 	msg, _ := message.ToByteArray()
@@ -26,7 +28,7 @@ func (m mathOperations) broadcastStartOfGame() {
 
 func (m mathOperations) broadcastGameEnd() {
 	message := utils.GameMessage{
-		Type: utils.LobbyEventEndOfGame.String(),
+		Type: shared.LobbyEventEndOfGame.String(),
 	}
 
 	msg, _ := message.ToByteArray()
@@ -48,7 +50,7 @@ func (m mathOperations) broadcastScoreboard() {
 
 	marshaledScoreboard, _ := json.Marshal(scoreboard)
 	message := utils.GameMessage{
-		Type:    utils.LobbyEventScoreboard.String(),
+		Type:    shared.LobbyEventScoreboard.String(),
 		Message: string(marshaledScoreboard),
 	}
 
@@ -69,7 +71,7 @@ func (m mathOperations) broadcastQuestion() {
 
 func (m mathOperations) sendGameEnd(playerID uuid.UUID) {
 	message := utils.GameMessage{
-		Type: utils.GameEventFinishedGame.String(),
+		Type: shared.GameEventFinishedGame.String(),
 	}
 
 	msg, _ := message.ToByteArray()
