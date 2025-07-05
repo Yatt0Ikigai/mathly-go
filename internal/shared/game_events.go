@@ -1,21 +1,24 @@
 package shared
 
-type GameEvent string
+type CommonGameEvent string
 
 var (
-	GameEventCorrectAnswer GameEvent = "CorrectAnswer"
-	GameEventWrongAnswer   GameEvent = "WrongAnswer"
-	GameEventFinishedGame  GameEvent = "FinishedGame"
+	CommonGameEventCorrectAnswer CommonGameEvent = "CorrectAnswer"
+	CommonGameEventWrongAnswer   CommonGameEvent = "WrongAnswer"
+	CommonGameEventFinishedGame  CommonGameEvent = "FinishedGame"
+	CommonGameEventScoreboard    CommonGameEvent = "Scoreboard"
 )
 
-func (g GameEvent) String() string {
-	switch g {
-	case GameEventCorrectAnswer:
+func (e CommonGameEvent) String() string {
+	switch e {
+	case CommonGameEventCorrectAnswer:
 		return "CorrectAnswer"
-	case GameEventWrongAnswer:
+	case CommonGameEventWrongAnswer:
 		return "WrongAnswer"
-	case GameEventFinishedGame:
+	case CommonGameEventFinishedGame:
 		return "FinishedGame"
+	case CommonGameEventScoreboard:
+		return "Scoreboard"
 	default:
 		return "Unknown"
 	}

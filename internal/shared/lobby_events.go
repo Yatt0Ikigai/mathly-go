@@ -5,9 +5,9 @@ type LobbyEvent string
 var (
 	LobbyEventStartOfGame LobbyEvent = "StartOfGame"
 	LobbyEventEndOfGame   LobbyEvent = "EndOfGame"
-	LobbyEventScoreboard  LobbyEvent = "Scoreboard"
 
 	LobbyEventPlayerJoined LobbyEvent = "PlayerJoined"
+	LobbyEventPlayerLeft   LobbyEvent = "PlayerLeft"
 	LobbyEventPlayerID     LobbyEvent = "PlayerID"
 )
 
@@ -17,10 +17,10 @@ func (l LobbyEvent) String() string {
 		return "StartOfGame"
 	case LobbyEventEndOfGame:
 		return "EndOfGame"
-	case LobbyEventScoreboard:
-		return "Scoreboard"
 	case LobbyEventPlayerJoined:
 		return "LobbyPlayerJoined"
+	case LobbyEventPlayerLeft:
+		return "LobbyEventPlayerLeft"
 	case LobbyEventPlayerID:
 		return "PlayerID"
 	default:

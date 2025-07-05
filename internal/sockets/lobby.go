@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mathly/internal/models"
 	"mathly/internal/service"
+	"mathly/internal/shared"
 	"mathly/internal/sockets/games/math_operations"
 	gameUtils "mathly/internal/sockets/games/utils"
 	"mathly/internal/utils"
@@ -23,7 +24,7 @@ type Lobby interface {
 	LeaveLobby(Client)
 
 	ForwardMessage(models.Message)
-	BroadcastMessage([]byte)
+	BroadcastMessage(shared.SocketReponse)
 
 	handleJoin(c Client)
 	handleLeave(c Client)
@@ -39,7 +40,7 @@ type lobby struct {
 	Join      chan Client
 	Leave     chan Client
 	Forward   chan models.Message
-	Broadcast chan []byte
+	Broadcast chan shared.SocketReponse
 
 	Clients map[Client]bool
 
@@ -62,7 +63,7 @@ func NewLobby(services service.Service) Lobby {
 		Join:      make(chan Client),
 		Leave:     make(chan Client),
 		Clients:   make(map[Client]bool),
-		Broadcast: make(chan []byte, maxMessageAmount),
+		Broadcast: make(chan shared.SocketReponse, maxMessageAmount),
 	}
 
 	go l.run()
@@ -95,8 +96,8 @@ func (l *lobby) ForwardMessage(msg models.Message) {
 	l.Forward <- msg
 }
 
-func (l *lobby) BroadcastMessage(msg []byte) {
-	l.Broadcast <- msg
+func (l *lobby) BroadcastMessage(sR shared.SocketReponse) {
+	l.Broadcast <- sR
 }
 
 func (l *lobby) JoinLobby(c Client) {
@@ -160,17 +161,29 @@ func (l *lobby) handleJoin(c Client) {
 		l.Owner = c
 	}
 
-	var playerJoinMessage, returnPlayerIDMessage []byte
-	l.Broadcast <- fmt.Appendf(playerJoinMessage, "New Player %s Joined", c.GetNickname())
-	c.SendMessage(fmt.Appendf(returnPlayerIDMessage, "%s", c.GetID().String()))
+	l.Broadcast <- shared.CreateSocketResponse(
+		shared.EventLobby,
+		shared.LobbyEventPlayerJoined,
+		c.GetNickname(),
+	)
 	l.Clients[c] = true
+
+	c.SendMessage(shared.CreateSocketResponse(
+		shared.EventLobby,
+		shared.LobbyEventPlayerID,
+		c.GetID().String(),
+	))
 }
 
 func (l *lobby) handleLeave(c Client) {
 	delete(l.Clients, c)
 	c.Close()
-	var playerLeftMessage []byte
-	l.Broadcast <- fmt.Appendf(playerLeftMessage, "Player %s Left", c.GetNickname())
+
+	l.Broadcast <- shared.CreateSocketResponse(
+		shared.EventGame,
+		shared.LobbyEventPlayerLeft,
+		c.GetNickname(),
+	)
 }
 
 func (l *lobby) handleMessage(msg models.Message) {

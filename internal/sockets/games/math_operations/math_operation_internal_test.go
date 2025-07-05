@@ -3,10 +3,10 @@ package math_operations
 import (
 	"encoding/json"
 	"mathly/internal/models"
+	"mathly/internal/shared"
+	math_operations_events "mathly/internal/sockets/games/math_operations/events"
 	gameUtils "mathly/internal/sockets/games/utils"
 	"mathly/internal/utils"
-
-	// "go.uber.org/mock/gomock"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
@@ -14,15 +14,15 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func mockSender(receiver chan []byte) func([]byte) {
-	return func(b []byte) {
+func mockSender(receiver chan shared.SocketReponse) func(shared.SocketReponse) {
+	return func(b shared.SocketReponse) {
 		receiver <- b
 	}
 }
 
 var _ = Describe("User", Ordered, func() {
-	playerOneReceiver := make(chan []byte, 10)
-	playerTwoReceiver := make(chan []byte, 10)
+	playerOneReceiver := make(chan shared.SocketReponse, 10)
+	playerTwoReceiver := make(chan shared.SocketReponse, 10)
 
 	playerOneId, _ := uuid.Parse("10zcxzxc-3144-43fe-ab86-aab9f5c8de10")
 	playerTwoId, _ := uuid.Parse("80asdasd-3144-43fe-ab86-aab9f5c8de80")
@@ -42,7 +42,7 @@ var _ = Describe("User", Ordered, func() {
 	players[playerTwoId] = playerTwo
 
 	var (
-		broadcast         chan []byte
+		broadcast         chan shared.SocketReponse
 		mathOperationGame mathOperations
 
 		randomCtrl *gomock.Controller
@@ -59,7 +59,7 @@ var _ = Describe("User", Ordered, func() {
 			Random:          randomMock,
 		}
 
-		broadcast = make(chan []byte, 10)
+		broadcast = make(chan shared.SocketReponse, 10)
 
 		mathOperationGame = InitMockOperationsGame(config, players, broadcast)
 	})
@@ -128,9 +128,21 @@ var _ = Describe("User", Ordered, func() {
 
 			// then
 			msg := <-playerOneReceiver
-			Expect(string(msg)).To(Equal("{\"Question\":\"Q2\",\"Answers\":[\"D\",\"C\"]}"))
+			Expect(msg).To(Equal(
+				shared.CreateSocketResponse(
+					shared.EventGame,
+					math_operations_events.MathOperationsEventQuestion,
+					"{\"Question\":\"Q2\",\"Answers\":[\"D\",\"C\"]}",
+				),
+			))
 			msg = <-broadcast
-			Expect(string(msg)).To(Equal("{\"Type\":\"Scoreboard\",\"Message\":\"{\\\"Test\\\":1,\\\"TestTwo\\\":0}\"}"))
+			Expect(msg).To(Equal(
+				shared.CreateSocketResponse(
+					shared.EventGame,
+					shared.CommonGameEventScoreboard,
+					"{\"Test\":1,\"TestTwo\":0}",
+				),
+			))
 
 			Expect(mathOperationGame.scoreBoard[playerOne.ConnectionID]).To(Equal(1))
 			Expect(mathOperationGame.playerQuestion[playerOne.ConnectionID]).To(Equal(1))
@@ -155,9 +167,9 @@ var _ = Describe("User", Ordered, func() {
 
 			// then
 			msg := <-playerOneReceiver
-			Expect(string(msg)).To(Equal("{\"Question\":\"Q2\",\"Answers\":[\"D\",\"C\"]}"))
+			Expect(msg).To(Equal(shared.CreateSocketResponse(shared.EventGame, math_operations_events.MathOperationsEventQuestion, "{\"Question\":\"Q2\",\"Answers\":[\"D\",\"C\"]}")))
 			msg = <-broadcast
-			Expect(string(msg)).To(Equal("{\"Type\":\"Scoreboard\",\"Message\":\"{\\\"Test\\\":-1,\\\"TestTwo\\\":0}\"}"))
+			Expect(msg).To(Equal(shared.CreateSocketResponse(shared.EventGame, shared.CommonGameEventScoreboard, "{\"Test\":-1,\"TestTwo\":0}")))
 
 			Expect(mathOperationGame.scoreBoard[playerOne.ConnectionID]).To(Equal(-1))
 			Expect(mathOperationGame.playerQuestion[playerOne.ConnectionID]).To(Equal(1))

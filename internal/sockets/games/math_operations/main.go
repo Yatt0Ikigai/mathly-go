@@ -1,9 +1,11 @@
 package math_operations
 
 import (
-	"github.com/google/uuid"
 	"mathly/internal/models"
+	"mathly/internal/shared"
 	"mathly/internal/sockets/games/utils"
+
+	"github.com/google/uuid"
 )
 
 type MathOperations interface {
@@ -17,7 +19,7 @@ type MathOperations interface {
 	broadcastGameEnd()
 
 	sendGameEnd(playerID uuid.UUID)
-	messagePlayer(playerID uuid.UUID, message []byte)
+	messagePlayer(playerID uuid.UUID, message shared.SocketReponse)
 
 	generateAdditionQuestion() MathQuestion
 	handleAnswerMessage(msg models.Message)
@@ -25,14 +27,14 @@ type MathOperations interface {
 
 type mathOperations struct {
 	config         utils.GameConfig
-	broadcast      chan []byte
+	broadcast      chan shared.SocketReponse
 	questions      []MathQuestion
 	players        map[uuid.UUID]models.Player
 	scoreBoard     map[uuid.UUID]int
 	playerQuestion map[uuid.UUID]int
 }
 
-func InitMathOperationsGame(c utils.GameConfig, players map[uuid.UUID]models.Player, broadcast chan []byte) MathOperations {
+func InitMathOperationsGame(c utils.GameConfig, players map[uuid.UUID]models.Player, broadcast chan shared.SocketReponse) MathOperations {
 	m := mathOperations{
 		config:         c,
 		broadcast:      broadcast,
@@ -54,7 +56,7 @@ func InitMathOperationsGame(c utils.GameConfig, players map[uuid.UUID]models.Pla
 	return m
 }
 
-func InitMockOperationsGame(c utils.GameConfig, players map[uuid.UUID]models.Player, broadcast chan []byte) mathOperations {
+func InitMockOperationsGame(c utils.GameConfig, players map[uuid.UUID]models.Player, broadcast chan shared.SocketReponse) mathOperations {
 	m := mathOperations{
 		config:         c,
 		broadcast:      broadcast,
