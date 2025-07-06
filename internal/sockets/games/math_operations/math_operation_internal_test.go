@@ -3,10 +3,10 @@ package math_operations
 import (
 	"encoding/json"
 	"mathly/internal/models"
+	"mathly/internal/service"
 	"mathly/internal/shared"
 	"mathly/internal/sockets/games/common"
 	math_operations_events "mathly/internal/sockets/games/math_operations/events"
-	"mathly/internal/utils"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
@@ -24,7 +24,7 @@ var _ = Describe("User", Ordered, func() {
 	playerOneReceiver := make(chan shared.SocketReponse, 10)
 	playerTwoReceiver := make(chan shared.SocketReponse, 10)
 
-	playerOneId, _ := uuid.Parse("10zcxzxc-3144-43fe-ab86-aab9f5c8de10")
+	playerOneId, _ := uuid.Parse("95f3cec5-ca92-45a4-a3b7-b5001eaad1b4")
 	playerTwoId, _ := uuid.Parse("80asdasd-3144-43fe-ab86-aab9f5c8de80")
 	playerOne := models.Player{
 		Nickname:     "Test",
@@ -46,20 +46,38 @@ var _ = Describe("User", Ordered, func() {
 		mathOperationGame mathOperations
 
 		randomCtrl *gomock.Controller
-		randomMock *utils.MockRandom
+
+		randomMock *service.MockRandom
 	)
 
 	BeforeEach(func() {
 		randomCtrl = gomock.NewController(GinkgoT())
-		randomMock = utils.NewMockRandom(randomCtrl)
-
-		// listener := make(chan models.Message)
-		config := common_games.GameConfig{}
+		randomMock = service.NewMockRandom(randomCtrl)
 
 		broadcast = make(chan shared.SocketReponse, 10)
 
+		config := common_games.GameConfig{
+			Services: common_games.GameServices{
+				Random: randomMock,
+			},
+			Settings:        common_games.GameSettings{},
+			MessageListener: nil,
+			Broadcast:       broadcast,
+			Players:         players,
+		}
+
+		scoreboard := make(map[uuid.UUID]int)
+		scoreboard[playerOneId] = 0
+		scoreboard[playerTwoId] = 0
+
+		playerScoreboard := make(map[uuid.UUID]int)
+		playerScoreboard[playerOneId] = 0
+		playerScoreboard[playerTwoId] = 0
+
 		mathOperationGame = mathOperations{
-			config: config,
+			config:         config,
+			scoreBoard:     scoreboard,
+			playerQuestion: playerScoreboard,
 		}
 	})
 
@@ -67,11 +85,11 @@ var _ = Describe("User", Ordered, func() {
 		It("should return correct question", func() {
 			// given
 			gomock.InOrder(
-				randomMock.EXPECT().Intn(1000).Return(600),
-				randomMock.EXPECT().Intn(1000).Return(600),
-				randomMock.EXPECT().Intn(100).Return(10),
-				randomMock.EXPECT().Intn(100).Return(60),
-				randomMock.EXPECT().Intn(100).Return(80),
+				randomMock.EXPECT().GenerateRandomNumber(1000).Return(600, nil),
+				randomMock.EXPECT().GenerateRandomNumber(1000).Return(600, nil),
+				randomMock.EXPECT().GenerateRandomNumber(100).Return(10, nil),
+				randomMock.EXPECT().GenerateRandomNumber(100).Return(60, nil),
+				randomMock.EXPECT().GenerateRandomNumber(100).Return(80, nil),
 			)
 
 			// when
