@@ -30,6 +30,11 @@ type Lobby interface {
 	handleLobbyMessage(msg models.Message)
 }
 
+type LobbyServices struct {
+	LobbyHandler service.LobbyHandler
+	Random       service.Random
+}
+
 type lobby struct {
 	ID uuid.UUID
 
@@ -42,21 +47,22 @@ type lobby struct {
 
 	Clients map[Client]bool
 
-	Game         common_games.Game
-	LobbyHandler service.LobbyHandler
-	GameLibrary  games.GameLibrary
-
-	Settings Settings
+	Game        common_games.Game
+	Services    LobbyServices
+	GameLibrary games.GameLibrary
 }
-
-type Settings struct{}
 
 func NewLobby(services service.Service) Lobby {
 	id := uuid.New()
 	maxMessageAmount := 10
 
 	l := lobby{
-		ID: id,
+		ID:          id,
+		GameLibrary: games.NewGameLibrary(),
+		Services: LobbyServices{
+			LobbyHandler: services.LobbyHandler(),
+			Random:       services.Random(),
+		},
 
 		Forward:   make(chan models.Message, maxMessageAmount),
 		Join:      make(chan Client),

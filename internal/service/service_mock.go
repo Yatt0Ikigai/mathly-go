@@ -66,3 +66,17 @@ func (mr *MockServiceMockRecorder) LobbyHandler() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LobbyHandler", reflect.TypeOf((*MockService)(nil).LobbyHandler))
 }
+
+// Random mocks base method.
+func (m *MockService) Random() Random {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Random")
+	ret0, _ := ret[0].(Random)
+	return ret0
+}
+
+// Random indicates an expected call of Random.
+func (mr *MockServiceMockRecorder) Random() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Random", reflect.TypeOf((*MockService)(nil).Random))
+}

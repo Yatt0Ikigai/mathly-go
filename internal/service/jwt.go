@@ -1,3 +1,4 @@
+//go:generate mockgen -source=jwt.go -package service -destination=jwt_mock.go
 package service
 
 import (

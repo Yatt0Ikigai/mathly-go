@@ -1,3 +1,4 @@
+//go:generate mockgen -source=random.go -package service -destination=random_mock.go
 package service
 
 import (
@@ -11,7 +12,7 @@ type Random interface {
 
 type random struct{}
 
-func NewRandom(c ServiceConfig) Random {
+func newRandom() Random {
 	return &random{}
 }
 
