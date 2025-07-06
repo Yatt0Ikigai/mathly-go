@@ -18,7 +18,7 @@ func (m mathOperations) StartTheGame() {
 }
 
 func (m mathOperations) broadcastStartOfGame() {
-	m.broadcast <- shared.CreateSocketResponse(
+	m.config.Broadcast <- shared.CreateSocketResponse(
 		shared.EventLobby,
 		shared.LobbyEventStartOfGame,
 		"",
@@ -26,7 +26,7 @@ func (m mathOperations) broadcastStartOfGame() {
 }
 
 func (m mathOperations) broadcastGameEnd() {
-	m.broadcast <- shared.CreateSocketResponse(
+	m.config.Broadcast <- shared.CreateSocketResponse(
 		shared.EventLobby,
 		shared.LobbyEventEndOfGame,
 		"",
@@ -43,11 +43,11 @@ func (m mathOperations) messagePlayer(playerID uuid.UUID, message shared.SocketR
 func (m mathOperations) broadcastScoreboard() {
 	scoreboard := map[string]int{}
 	for id, score := range m.scoreBoard {
-		scoreboard[m.players[id].Nickname] = score
+		scoreboard[m.config.Players[id].Nickname] = score
 	}
 
 	marshaledScoreboard, _ := json.Marshal(scoreboard)
-	m.broadcast <- shared.CreateSocketResponse(
+	m.config.Broadcast <- shared.CreateSocketResponse(
 		shared.EventGame,
 		shared.CommonGameEventScoreboard,
 		string(marshaledScoreboard),
@@ -58,7 +58,7 @@ func (m mathOperations) broadcastQuestion() {
 	question, _ := json.Marshal(m.questions[0])
 	marshaledQuestion, _ := json.Marshal(question)
 
-	m.broadcast <- shared.CreateSocketResponse(
+	m.config.Broadcast <- shared.CreateSocketResponse(
 		shared.EventGame,
 		math_operations_events.MathOperationsEventQuestion,
 		string(marshaledQuestion),
@@ -74,8 +74,13 @@ func (m mathOperations) sendGameEnd(playerID uuid.UUID) {
 }
 
 func (m mathOperations) generateAdditionQuestion() MathQuestion {
-	numberOne := m.config.Random.Intn(1000) - 500
-	numberTwo := m.config.Random.Intn(1000) - 500
+	random := m.config.Services.Random
+
+	numberOne, _ := random.GenerateRandomNumber(1000)
+	numberOne -= 500
+	numberTwo, _ := random.GenerateRandomNumber(1000)
+	numberTwo -= 500
+
 	result := numberOne + numberTwo
 
 	question := fmt.Sprintf(`What's the sum of %d + %d ?`, numberOne, numberTwo)
@@ -83,11 +88,15 @@ func (m mathOperations) generateAdditionQuestion() MathQuestion {
 	answers := make([]string, 0)
 	answers = append(answers, fmt.Sprintf("%d", result))
 	for range 3 {
-		answers = append(answers, fmt.Sprintf("%d", (result+m.config.Random.Intn(100)-50)))
+		diff, _ := random.GenerateRandomNumber(100)
+		diff -= 50
+		answers = append(answers, fmt.Sprintf("%d", (result+diff)))
 	}
+
 	rand.Shuffle(len(answers), func(i, j int) {
 		answers[i], answers[j] = answers[j], answers[i]
 	})
+
 	return MathQuestion{
 		Question:      question,
 		Answers:       answers,
@@ -105,7 +114,7 @@ func (m mathOperations) generateAdditionQuestion() MathQuestion {
 // }
 
 func (m mathOperations) findPlayerById(id uuid.UUID) *models.Player {
-	for _, p := range m.players {
+	for _, p := range m.config.Players {
 		if p.ConnectionID == id {
 			return &p
 		}

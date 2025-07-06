@@ -2,14 +2,12 @@ package sockets
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"mathly/internal/models"
 	"mathly/internal/service"
 	"mathly/internal/shared"
-	"mathly/internal/sockets/games/math_operations"
-	gameUtils "mathly/internal/sockets/games/utils"
-	"mathly/internal/utils"
-
-	"github.com/google/uuid"
+	"mathly/internal/sockets/games"
+	common_games "mathly/internal/sockets/games/common"
 )
 
 type Lobby interface {
@@ -18,7 +16,7 @@ type Lobby interface {
 	GetClientBySocketID(socketID uuid.UUID) Client
 	GetPlayersNicknamesWithout(string) []string
 	GetPlayers() map[uuid.UUID]models.Player
-	GetGame() gameUtils.Game
+	GetGame() common_games.Game
 
 	JoinLobby(Client)
 	LeaveLobby(Client)
@@ -44,8 +42,9 @@ type lobby struct {
 
 	Clients map[Client]bool
 
-	Game         gameUtils.Game
+	Game         common_games.Game
 	LobbyHandler service.LobbyHandler
+	GameLibrary  games.GameLibrary
 
 	Settings Settings
 }
@@ -143,7 +142,7 @@ func (l *lobby) GetPlayers() map[uuid.UUID]models.Player {
 	return players
 }
 
-func (l *lobby) GetGame() gameUtils.Game {
+func (l *lobby) GetGame() common_games.Game {
 	return l.Game
 }
 
@@ -201,11 +200,8 @@ func (l *lobby) handleMessage(msg models.Message) {
 func (l *lobby) handleLobbyMessage(msg models.Message) {
 	if msg.SenderID == l.GetOwnerID() {
 		if msg.Action == models.ActionTypeStartGame {
-			l.Game = math_operations.InitMathOperationsGame(gameUtils.GameConfig{
-				Random:          utils.NewRandom(),
-				MessageListener: l.Forward,
-			}, l.GetPlayers(), l.Broadcast)
-			l.Game.StartTheGame()
+			// TODO for now static game + config
+			l.GameLibrary.StartNewGame(games.AvailableGamesMathOperations, common_games.GameConfig{})
 		}
 	}
 }

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"mathly/internal/models"
 	"mathly/internal/shared"
+	"mathly/internal/sockets/games/common"
 	math_operations_events "mathly/internal/sockets/games/math_operations/events"
-	gameUtils "mathly/internal/sockets/games/utils"
 	"mathly/internal/utils"
 
 	"github.com/google/uuid"
@@ -53,15 +53,14 @@ var _ = Describe("User", Ordered, func() {
 		randomCtrl = gomock.NewController(GinkgoT())
 		randomMock = utils.NewMockRandom(randomCtrl)
 
-		listener := make(chan models.Message)
-		config := gameUtils.GameConfig{
-			MessageListener: listener,
-			Random:          randomMock,
-		}
+		// listener := make(chan models.Message)
+		config := common_games.GameConfig{}
 
 		broadcast = make(chan shared.SocketReponse, 10)
 
-		mathOperationGame = InitMockOperationsGame(config, players, broadcast)
+		mathOperationGame = mathOperations{
+			config: config,
+		}
 	})
 
 	Describe("generateAdditionQuestion", func() {
