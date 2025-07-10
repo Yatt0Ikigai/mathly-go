@@ -61,7 +61,6 @@ var _ = Describe("User", Ordered, func() {
 				Random: randomMock,
 			},
 			Settings:        common_games.GameSettings{},
-			MessageListener: nil,
 			Broadcast:       broadcast,
 			Players:         players,
 		}

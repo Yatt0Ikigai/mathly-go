@@ -52,13 +52,13 @@ type lobby struct {
 	GameLibrary games.GameLibrary
 }
 
-func NewLobby(services service.Service) Lobby {
+func NewLobby(services service.Service, gameLib games.GameLibrary) Lobby {
 	id := uuid.New()
 	maxMessageAmount := 10
 
 	l := lobby{
 		ID:          id,
-		GameLibrary: games.NewGameLibrary(),
+		GameLibrary: gameLib,
 		Services: LobbyServices{
 			LobbyHandler: services.LobbyHandler(),
 			Random:       services.Random(),
@@ -206,8 +206,14 @@ func (l *lobby) handleMessage(msg models.Message) {
 func (l *lobby) handleLobbyMessage(msg models.Message) {
 	if msg.SenderID == l.GetOwnerID() {
 		if msg.Action == models.ActionTypeStartGame {
-			// TODO for now static game + config
-			l.GameLibrary.StartNewGame(games.AvailableGamesMathOperations, common_games.GameConfig{})
+			l.GameLibrary.StartNewGame(games.AvailableGamesMathOperations, common_games.GameConfig{
+				Services: common_games.GameServices{
+					Random: l.Services.Random,
+				},
+				Settings:  common_games.GameSettings{},
+				Broadcast: l.Broadcast,
+				Players:   l.GetPlayers(),
+			})
 		}
 	}
 }

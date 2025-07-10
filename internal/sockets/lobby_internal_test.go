@@ -4,6 +4,7 @@ import (
 	"mathly/internal/models"
 	"mathly/internal/service"
 	"mathly/internal/shared"
+	"mathly/internal/sockets/games"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,9 +18,11 @@ var (
 	serviceCtrl      *gomock.Controller
 	randomCtrl       *gomock.Controller
 	lobbyHandlerCtrl *gomock.Controller
+	gameLibraryCtrl  *gomock.Controller
 	serviceMock      *service.MockService
 	randomMock       *service.MockRandom
 	lobbyHandlerMock *service.MockLobbyHandler
+	gameLibraryMock  *games.MockGameLibrary
 
 	clientOneCtrl *gomock.Controller
 	clientTwoCtrl *gomock.Controller
@@ -52,17 +55,19 @@ var _ = Describe("Lobby", Ordered, func() {
 		serviceCtrl = gomock.NewController(GinkgoT())
 		randomCtrl = gomock.NewController(GinkgoT())
 		lobbyHandlerCtrl = gomock.NewController(GinkgoT())
+		gameLibraryCtrl = gomock.NewController(GinkgoT())
 
 		clientOneMock = NewMockClient(clientOneCtrl)
 		clientTwoMock = NewMockClient(clientTwoCtrl)
 		serviceMock = service.NewMockService(serviceCtrl)
 		randomMock = service.NewMockRandom(serviceCtrl)
 		lobbyHandlerMock = service.NewMockLobbyHandler(serviceCtrl)
+		gameLibraryMock = games.NewMockGameLibrary(gameLibraryCtrl)
 
 		serviceMock.EXPECT().Random().Return(randomMock)
 		serviceMock.EXPECT().LobbyHandler().Return(lobbyHandlerMock)
 
-		L = NewLobby(serviceMock)
+		L = NewLobby(serviceMock, gameLibraryMock)
 	})
 
 	BeforeEach(func() {
@@ -103,7 +108,7 @@ var _ = Describe("Lobby", Ordered, func() {
 		L.handleJoin(clientTwoMock)
 
 		// then
-		//	Expect(L.GetOwnerID()).To(Equal(clientTwoId))
+		Expect(L.GetOwnerID()).To(Equal(clientOneId))
 	})
 
 	It("second player shouldn't start a game", func() {
@@ -117,25 +122,17 @@ var _ = Describe("Lobby", Ordered, func() {
 		})
 	})
 
-	// It("first player should start a game", func() {
-	// 	// given
-	// 	clientOneMock.EXPECT().GetReceiver().Times(1)
-	// 	clientTwoMock.EXPECT().GetReceiver().Times(1)
+	It("first player should start a game", func() {
+		// given
+		gameLibraryMock.EXPECT().StartNewGame(games.AvailableGamesMathOperations, gomock.Any())
 
-	// 	clientOneMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventStartOfGame, "")).Times(1)
-	// 	clientOneMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventGame, shared.CommonGameEventScoreboard, "{\"clientOne\":0,\"clientTwo\":0}")).Times(1)
-	// 	clientOneMock.EXPECT().SendMessage(gomock.Any()).Times(1)
-	// 	clientTwoMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventStartOfGame, "")).Times(1)
-	// 	clientTwoMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventGame, shared.CommonGameEventScoreboard, "{\"clientOne\":0,\"clientTwo\":0}")).Times(1)
-	// 	clientTwoMock.EXPECT().SendMessage(gomock.Any()).Times(1)
-
-	// 	// when
-	// 	L.handleLobbyMessage(models.Message{
-	// 		SenderID: clientOneId,
-	// 		MessageDetails: models.MessageDetails{
-	// 			Type:   models.MessageTypeLobby,
-	// 			Action: models.ActionTypeStartGame,
-	// 		},
-	// 	})
-	// })
+		// when
+		L.handleLobbyMessage(models.Message{
+			SenderID: clientOneId,
+			MessageDetails: models.MessageDetails{
+				Type:   models.MessageTypeLobby,
+				Action: models.ActionTypeStartGame,
+			},
+		})
+	})
 })

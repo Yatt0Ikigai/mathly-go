@@ -104,15 +104,6 @@ func (m mathOperations) generateAdditionQuestion() MathQuestion {
 	}
 }
 
-// func (m MathOperations) processGame() {
-// 	for {
-// 		select {
-// 		case msg := <-m.config.MessageListener:
-// 			msg.Data
-// 		}
-// 	}
-// }
-
 func (m mathOperations) findPlayerById(id uuid.UUID) *models.Player {
 	for _, p := range m.config.Players {
 		if p.ConnectionID == id {

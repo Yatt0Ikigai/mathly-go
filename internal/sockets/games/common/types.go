@@ -27,7 +27,6 @@ type GameSettings map[string]any
 type GameConfig struct {
 	Services        GameServices
 	Settings        GameSettings
-	MessageListener chan models.Message
 	Broadcast       chan shared.SocketReponse
 	Players         map[uuid.UUID]models.Player
 }
