@@ -25,7 +25,7 @@ type SocketResponse struct {
 func (s SocketResponse) Stringify() string {
 	m, e := json.Marshal(s)
 	if e != nil {
-		log.Log.Errorf(`couldn't stringify %w`, s)
+		log.Log.Errorf(`couldn't stringify %v`, s)
 		return ""
 	}
 	return string(m)
