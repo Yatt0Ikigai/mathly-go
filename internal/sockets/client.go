@@ -14,7 +14,7 @@ import (
 )
 
 type Client interface {
-	SendMessage(shared.SocketReponse)
+	SendMessage(shared.SocketResponse)
 
 	GetNickname() string
 	GetID() uuid.UUID
@@ -95,7 +95,7 @@ func (c *client) Write() {
 	}
 }
 
-func (c *client) SendMessage(msg shared.SocketReponse) {
+func (c *client) SendMessage(msg shared.SocketResponse) {
 	c.Receive <- msg.ToByte()
 }
 

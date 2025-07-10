@@ -96,7 +96,7 @@ func (mr *MockClientMockRecorder) GetReceiver() *gomock.Call {
 }
 
 // SendMessage mocks base method.
-func (m *MockClient) SendMessage(arg0 shared.SocketReponse) {
+func (m *MockClient) SendMessage(arg0 shared.SocketResponse) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SendMessage", arg0)
 }

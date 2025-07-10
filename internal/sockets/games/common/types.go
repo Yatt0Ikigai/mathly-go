@@ -27,6 +27,6 @@ type GameSettings map[string]any
 type GameConfig struct {
 	Services  GameServices
 	Settings  GameSettings
-	Broadcast chan shared.SocketReponse
+	Broadcast chan shared.SocketResponse
 	Players   map[uuid.UUID]models.Player
 }

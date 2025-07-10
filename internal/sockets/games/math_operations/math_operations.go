@@ -33,7 +33,7 @@ func (m mathOperations) broadcastGameEnd() {
 	)
 }
 
-func (m mathOperations) messagePlayer(playerID uuid.UUID, message shared.SocketReponse) {
+func (m mathOperations) messagePlayer(playerID uuid.UUID, message shared.SocketResponse) {
 	p := m.findPlayerById(playerID)
 	if p != nil {
 		p.SendMessage(message)
@@ -56,12 +56,11 @@ func (m mathOperations) broadcastScoreboard() {
 
 func (m mathOperations) broadcastQuestion() {
 	question, _ := json.Marshal(m.questions[0])
-	marshaledQuestion, _ := json.Marshal(question)
 
 	m.config.Broadcast <- shared.CreateSocketResponse(
 		shared.EventGame,
 		math_operations_events.MathOperationsEventQuestion,
-		string(marshaledQuestion),
+		string(question),
 	)
 }
 

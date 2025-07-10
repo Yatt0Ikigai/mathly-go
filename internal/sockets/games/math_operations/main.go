@@ -3,7 +3,7 @@ package math_operations
 import (
 	"mathly/internal/models"
 	"mathly/internal/shared"
-	"mathly/internal/sockets/games/common"
+	common_games "mathly/internal/sockets/games/common"
 
 	"github.com/google/uuid"
 )
@@ -19,7 +19,7 @@ type MathOperations interface {
 	broadcastGameEnd()
 
 	sendGameEnd(playerID uuid.UUID)
-	messagePlayer(playerID uuid.UUID, message shared.SocketReponse)
+	messagePlayer(playerID uuid.UUID, message shared.SocketResponse)
 
 	generateAdditionQuestion() MathQuestion
 	handleAnswerMessage(msg models.Message)

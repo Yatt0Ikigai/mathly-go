@@ -16,13 +16,13 @@ type eventType interface {
 	String() string
 }
 
-type SocketReponse struct {
+type SocketResponse struct {
 	Event Event  `json:"event"`
 	Type  string `json:"type"`
 	Data  string `json:"data"`
 }
 
-func (s SocketReponse) Stringify() string {
+func (s SocketResponse) Stringify() string {
 	m, e := json.Marshal(s)
 	if e != nil {
 		log.Log.Errorf(`couldn't stringify %w`, s)
@@ -31,7 +31,7 @@ func (s SocketReponse) Stringify() string {
 	return string(m)
 }
 
-func (s SocketReponse) ToByte() []byte {
+func (s SocketResponse) ToByte() []byte {
 	m, e := json.Marshal(s)
 	if e != nil {
 		log.Log.Errorf(`couldn't convert to byte %w`, s)
@@ -40,8 +40,8 @@ func (s SocketReponse) ToByte() []byte {
 	return m
 }
 
-func CreateSocketResponse(e Event, eT eventType, d string) SocketReponse {
-	return SocketReponse{
+func CreateSocketResponse(e Event, eT eventType, d string) SocketResponse {
+	return SocketResponse{
 		Event: e,
 		Type:  eT.String(),
 		Data:  d,

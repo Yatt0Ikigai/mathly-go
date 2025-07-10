@@ -2,12 +2,13 @@ package sockets
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"mathly/internal/models"
 	"mathly/internal/service"
 	"mathly/internal/shared"
 	"mathly/internal/sockets/games"
 	common_games "mathly/internal/sockets/games/common"
+
+	"github.com/google/uuid"
 )
 
 type Lobby interface {
@@ -22,7 +23,7 @@ type Lobby interface {
 	LeaveLobby(Client)
 
 	ForwardMessage(models.Message)
-	BroadcastMessage(shared.SocketReponse)
+	BroadcastMessage(shared.SocketResponse)
 
 	handleJoin(c Client)
 	handleLeave(c Client)
@@ -43,7 +44,7 @@ type lobby struct {
 	Join      chan Client
 	Leave     chan Client
 	Forward   chan models.Message
-	Broadcast chan shared.SocketReponse
+	Broadcast chan shared.SocketResponse
 
 	Clients map[Client]bool
 
@@ -68,7 +69,7 @@ func NewLobby(services service.Service, gameLib games.GameLibrary) Lobby {
 		Join:      make(chan Client),
 		Leave:     make(chan Client),
 		Clients:   make(map[Client]bool),
-		Broadcast: make(chan shared.SocketReponse, maxMessageAmount),
+		Broadcast: make(chan shared.SocketResponse, maxMessageAmount),
 	}
 
 	go l.run()
@@ -101,7 +102,7 @@ func (l *lobby) ForwardMessage(msg models.Message) {
 	l.Forward <- msg
 }
 
-func (l *lobby) BroadcastMessage(sR shared.SocketReponse) {
+func (l *lobby) BroadcastMessage(sR shared.SocketResponse) {
 	l.Broadcast <- sR
 }
 
@@ -185,7 +186,7 @@ func (l *lobby) handleLeave(c Client) {
 	c.Close()
 
 	l.Broadcast <- shared.CreateSocketResponse(
-		shared.EventGame,
+		shared.EventLobby,
 		shared.LobbyEventPlayerLeft,
 		c.GetNickname(),
 	)
@@ -206,7 +207,7 @@ func (l *lobby) handleMessage(msg models.Message) {
 func (l *lobby) handleLobbyMessage(msg models.Message) {
 	if msg.SenderID == l.GetOwnerID() {
 		if msg.Action == models.ActionTypeStartGame {
-			l.GameLibrary.StartNewGame(games.AvailableGamesMathOperations, common_games.GameConfig{
+			l.Game = l.GameLibrary.StartNewGame(games.AvailableGamesMathOperations, common_games.GameConfig{
 				Services: common_games.GameServices{
 					Random: l.Services.Random,
 				},

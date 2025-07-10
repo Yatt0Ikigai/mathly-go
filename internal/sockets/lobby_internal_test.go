@@ -60,8 +60,8 @@ var _ = Describe("Lobby", Ordered, func() {
 		clientOneMock = NewMockClient(clientOneCtrl)
 		clientTwoMock = NewMockClient(clientTwoCtrl)
 		serviceMock = service.NewMockService(serviceCtrl)
-		randomMock = service.NewMockRandom(serviceCtrl)
-		lobbyHandlerMock = service.NewMockLobbyHandler(serviceCtrl)
+		randomMock = service.NewMockRandom(randomCtrl)
+		lobbyHandlerMock = service.NewMockLobbyHandler(lobbyHandlerCtrl)
 		gameLibraryMock = games.NewMockGameLibrary(gameLibraryCtrl)
 
 		serviceMock.EXPECT().Random().Return(randomMock)

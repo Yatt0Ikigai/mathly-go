@@ -10,5 +10,5 @@ type Player struct {
 	AccountID    *int64
 	ConnectionID uuid.UUID
 	Nickname     string
-	SendMessage  func(shared.SocketReponse)
+	SendMessage  func(shared.SocketResponse)
 }

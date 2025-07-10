@@ -5,7 +5,7 @@ import (
 	"mathly/internal/models"
 	"mathly/internal/service"
 	"mathly/internal/shared"
-	"mathly/internal/sockets/games/common"
+	common_games "mathly/internal/sockets/games/common"
 	math_operations_events "mathly/internal/sockets/games/math_operations/events"
 
 	"github.com/google/uuid"
@@ -14,15 +14,15 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func mockSender(receiver chan shared.SocketReponse) func(shared.SocketReponse) {
-	return func(b shared.SocketReponse) {
+func mockSender(receiver chan shared.SocketResponse) func(shared.SocketResponse) {
+	return func(b shared.SocketResponse) {
 		receiver <- b
 	}
 }
 
 var _ = Describe("User", Ordered, func() {
-	playerOneReceiver := make(chan shared.SocketReponse, 10)
-	playerTwoReceiver := make(chan shared.SocketReponse, 10)
+	playerOneReceiver := make(chan shared.SocketResponse, 10)
+	playerTwoReceiver := make(chan shared.SocketResponse, 10)
 
 	playerOneId, _ := uuid.Parse("95f3cec5-ca92-45a4-a3b7-b5001eaad1b4")
 	playerTwoId, _ := uuid.Parse("80asdasd-3144-43fe-ab86-aab9f5c8de80")
@@ -42,7 +42,7 @@ var _ = Describe("User", Ordered, func() {
 	players[playerTwoId] = playerTwo
 
 	var (
-		broadcast         chan shared.SocketReponse
+		broadcast         chan shared.SocketResponse
 		mathOperationGame mathOperations
 
 		randomCtrl *gomock.Controller
@@ -54,7 +54,7 @@ var _ = Describe("User", Ordered, func() {
 		randomCtrl = gomock.NewController(GinkgoT())
 		randomMock = service.NewMockRandom(randomCtrl)
 
-		broadcast = make(chan shared.SocketReponse, 10)
+		broadcast = make(chan shared.SocketResponse, 10)
 
 		config := common_games.GameConfig{
 			Services: common_games.GameServices{
