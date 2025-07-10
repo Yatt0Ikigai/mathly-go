@@ -25,8 +25,8 @@ type GameServices struct {
 type GameSettings map[string]any
 
 type GameConfig struct {
-	Services        GameServices
-	Settings        GameSettings
-	Broadcast       chan shared.SocketReponse
-	Players         map[uuid.UUID]models.Player
+	Services  GameServices
+	Settings  GameSettings
+	Broadcast chan shared.SocketReponse
+	Players   map[uuid.UUID]models.Player
 }

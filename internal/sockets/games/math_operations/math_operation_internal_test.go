@@ -60,9 +60,9 @@ var _ = Describe("User", Ordered, func() {
 			Services: common_games.GameServices{
 				Random: randomMock,
 			},
-			Settings:        common_games.GameSettings{},
-			Broadcast:       broadcast,
-			Players:         players,
+			Settings:  common_games.GameSettings{},
+			Broadcast: broadcast,
+			Players:   players,
 		}
 
 		scoreboard := make(map[uuid.UUID]int)
