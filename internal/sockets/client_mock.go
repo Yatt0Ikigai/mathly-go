@@ -10,6 +10,7 @@
 package sockets
 
 import (
+	shared "mathly/internal/shared"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -95,7 +96,7 @@ func (mr *MockClientMockRecorder) GetReceiver() *gomock.Call {
 }
 
 // SendMessage mocks base method.
-func (m *MockClient) SendMessage(arg0 []byte) {
+func (m *MockClient) SendMessage(arg0 shared.SocketResponse) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SendMessage", arg0)
 }

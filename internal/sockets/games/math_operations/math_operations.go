@@ -3,10 +3,12 @@ package math_operations
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"math/rand"
 	"mathly/internal/models"
-	"mathly/internal/sockets/games/utils"
+	"mathly/internal/shared"
+	math_operations_events "mathly/internal/sockets/games/math_operations/events"
+
+	"github.com/google/uuid"
 )
 
 func (m mathOperations) StartTheGame() {
@@ -16,24 +18,22 @@ func (m mathOperations) StartTheGame() {
 }
 
 func (m mathOperations) broadcastStartOfGame() {
-	message := utils.GameMessage{
-		Type: utils.LobbyEventStartOfGame.String(),
-	}
-
-	msg, _ := message.ToByteArray()
-	m.broadcast <- msg
+	m.config.Broadcast <- shared.CreateSocketResponse(
+		shared.EventLobby,
+		shared.LobbyEventStartOfGame,
+		"",
+	)
 }
 
 func (m mathOperations) broadcastGameEnd() {
-	message := utils.GameMessage{
-		Type: utils.LobbyEventEndOfGame.String(),
-	}
-
-	msg, _ := message.ToByteArray()
-	m.broadcast <- msg
+	m.config.Broadcast <- shared.CreateSocketResponse(
+		shared.EventLobby,
+		shared.LobbyEventEndOfGame,
+		"",
+	)
 }
 
-func (m mathOperations) messagePlayer(playerID uuid.UUID, message []byte) {
+func (m mathOperations) messagePlayer(playerID uuid.UUID, message shared.SocketResponse) {
 	p := m.findPlayerById(playerID)
 	if p != nil {
 		p.SendMessage(message)
@@ -43,42 +43,43 @@ func (m mathOperations) messagePlayer(playerID uuid.UUID, message []byte) {
 func (m mathOperations) broadcastScoreboard() {
 	scoreboard := map[string]int{}
 	for id, score := range m.scoreBoard {
-		scoreboard[m.players[id].Nickname] = score
+		scoreboard[m.config.Players[id].Nickname] = score
 	}
 
 	marshaledScoreboard, _ := json.Marshal(scoreboard)
-	message := utils.GameMessage{
-		Type:    utils.LobbyEventScoreboard.String(),
-		Message: string(marshaledScoreboard),
-	}
-
-	msg, _ := message.ToByteArray()
-	m.broadcast <- msg
+	m.config.Broadcast <- shared.CreateSocketResponse(
+		shared.EventGame,
+		shared.CommonGameEventScoreboard,
+		string(marshaledScoreboard),
+	)
 }
 
 func (m mathOperations) broadcastQuestion() {
 	question, _ := json.Marshal(m.questions[0])
-	message := utils.GameMessage{
-		Type:    "Question",
-		Message: string(question),
-	}
 
-	msg, _ := message.ToByteArray()
-	m.broadcast <- msg
+	m.config.Broadcast <- shared.CreateSocketResponse(
+		shared.EventGame,
+		math_operations_events.MathOperationsEventQuestion,
+		string(question),
+	)
 }
 
 func (m mathOperations) sendGameEnd(playerID uuid.UUID) {
-	message := utils.GameMessage{
-		Type: utils.GameEventFinishedGame.String(),
-	}
-
-	msg, _ := message.ToByteArray()
-	m.messagePlayer(playerID, msg)
+	m.messagePlayer(playerID, shared.CreateSocketResponse(
+		shared.EventGame,
+		shared.CommonGameEventFinishedGame,
+		"",
+	))
 }
 
 func (m mathOperations) generateAdditionQuestion() MathQuestion {
-	numberOne := m.config.Random.Intn(1000) - 500
-	numberTwo := m.config.Random.Intn(1000) - 500
+	random := m.config.Services.Random
+
+	numberOne, _ := random.GenerateRandomNumber(1000)
+	numberOne -= 500
+	numberTwo, _ := random.GenerateRandomNumber(1000)
+	numberTwo -= 500
+
 	result := numberOne + numberTwo
 
 	question := fmt.Sprintf(`What's the sum of %d + %d ?`, numberOne, numberTwo)
@@ -86,11 +87,15 @@ func (m mathOperations) generateAdditionQuestion() MathQuestion {
 	answers := make([]string, 0)
 	answers = append(answers, fmt.Sprintf("%d", result))
 	for range 3 {
-		answers = append(answers, fmt.Sprintf("%d", (result+m.config.Random.Intn(100)-50)))
+		diff, _ := random.GenerateRandomNumber(100)
+		diff -= 50
+		answers = append(answers, fmt.Sprintf("%d", (result+diff)))
 	}
+
 	rand.Shuffle(len(answers), func(i, j int) {
 		answers[i], answers[j] = answers[j], answers[i]
 	})
+
 	return MathQuestion{
 		Question:      question,
 		Answers:       answers,
@@ -98,17 +103,8 @@ func (m mathOperations) generateAdditionQuestion() MathQuestion {
 	}
 }
 
-// func (m MathOperations) processGame() {
-// 	for {
-// 		select {
-// 		case msg := <-m.config.MessageListener:
-// 			msg.Data
-// 		}
-// 	}
-// }
-
 func (m mathOperations) findPlayerById(id uuid.UUID) *models.Player {
-	for _, p := range m.players {
+	for _, p := range m.config.Players {
 		if p.ConnectionID == id {
 			return &p
 		}
@@ -153,7 +149,11 @@ func (m mathOperations) handleAnswerMessage(msg models.Message) {
 	}
 
 	nextQuestion := m.questions[m.playerQuestion[p.ConnectionID]]
-	p.SendMessage(nextQuestion.Byte())
+	p.SendMessage(shared.CreateSocketResponse(
+		shared.EventGame,
+		math_operations_events.MathOperationsEventQuestion,
+		nextQuestion.String(),
+	))
 }
 
 func (m mathOperations) GetRightAnswer(q *int) string {

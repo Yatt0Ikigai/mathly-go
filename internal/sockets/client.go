@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"mathly/internal/log"
 	"mathly/internal/models"
+	"mathly/internal/shared"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ import (
 )
 
 type Client interface {
-	SendMessage([]byte)
+	SendMessage(shared.SocketResponse)
 
 	GetNickname() string
 	GetID() uuid.UUID
@@ -94,8 +95,8 @@ func (c *client) Write() {
 	}
 }
 
-func (c *client) SendMessage(msg []byte) {
-	c.Receive <- msg
+func (c *client) SendMessage(msg shared.SocketResponse) {
+	c.Receive <- msg.ToByte()
 }
 
 func (c *client) Close() {

@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"maps"
 	"mathly/internal/service"
+	"mathly/internal/sockets/games"
 	"slices"
 
 	"github.com/google/uuid"
 )
 
 type LobbyManager interface {
-	CreateLobby(services service.Service) Lobby
+	CreateLobby(services service.Service, gameLibrary games.GameLibrary) Lobby
 	FindLobby(uuid.UUID) Lobby
 	ListLobbies() []uuid.UUID
 }
@@ -25,8 +26,8 @@ func NewLobbyManager() LobbyManager {
 	}
 }
 
-func (l lobbyManager) CreateLobby(services service.Service) Lobby {
-	lobby := NewLobby(services)
+func (l lobbyManager) CreateLobby(services service.Service, gameLibrary games.GameLibrary) Lobby {
+	lobby := NewLobby(services, gameLibrary)
 	id := lobby.GetID()
 	l.Lobbies[id] = lobby
 

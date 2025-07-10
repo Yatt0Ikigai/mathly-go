@@ -1,3 +1,4 @@
+//go:generate mockgen -source=lobby_handler.go -package service -destination=lobby_handler_mock.go
 package service
 
 import (

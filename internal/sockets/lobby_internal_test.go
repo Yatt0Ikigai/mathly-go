@@ -1,11 +1,10 @@
 package sockets
 
 import (
-	"encoding/json"
-	"fmt"
 	"mathly/internal/models"
 	"mathly/internal/service"
-	"mathly/internal/sockets/games/math_operations"
+	"mathly/internal/shared"
+	"mathly/internal/sockets/games"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,8 +15,14 @@ import (
 )
 
 var (
-	serviceCtrl *gomock.Controller
-	serviceMock *service.MockService
+	serviceCtrl      *gomock.Controller
+	randomCtrl       *gomock.Controller
+	lobbyHandlerCtrl *gomock.Controller
+	gameLibraryCtrl  *gomock.Controller
+	serviceMock      *service.MockService
+	randomMock       *service.MockRandom
+	lobbyHandlerMock *service.MockLobbyHandler
+	gameLibraryMock  *games.MockGameLibrary
 
 	clientOneCtrl *gomock.Controller
 	clientTwoCtrl *gomock.Controller
@@ -26,20 +31,43 @@ var (
 )
 
 var _ = Describe("Lobby", Ordered, func() {
-	clientOneId, _ := uuid.Parse("10zcxzxc-3144-43fe-ab86-aab9f5c8de10")
-	clientTwoId, _ := uuid.Parse("asdaxzxc-3144-43fe-ab86-aab9f5c8de10")
+	type player struct {
+		id       string
+		nickname string
+	}
+
+	playerOne := player{
+		id:       "95f3cec5-ca92-45a4-a3b7-b5001eaad1b4",
+		nickname: "clientOne",
+	}
+	playerTwo := player{
+		id:       "b1eb7314-459d-4e4f-90ed-b79e1f8add5a",
+		nickname: "clientTwo",
+	}
+
+	clientOneId, _ := uuid.Parse(playerOne.id)
+	clientTwoId, _ := uuid.Parse(playerTwo.id)
 	var L Lobby
 
 	BeforeAll(func() {
 		clientOneCtrl = gomock.NewController(GinkgoT())
 		clientTwoCtrl = gomock.NewController(GinkgoT())
 		serviceCtrl = gomock.NewController(GinkgoT())
+		randomCtrl = gomock.NewController(GinkgoT())
+		lobbyHandlerCtrl = gomock.NewController(GinkgoT())
+		gameLibraryCtrl = gomock.NewController(GinkgoT())
 
 		clientOneMock = NewMockClient(clientOneCtrl)
 		clientTwoMock = NewMockClient(clientTwoCtrl)
 		serviceMock = service.NewMockService(serviceCtrl)
+		randomMock = service.NewMockRandom(randomCtrl)
+		lobbyHandlerMock = service.NewMockLobbyHandler(lobbyHandlerCtrl)
+		gameLibraryMock = games.NewMockGameLibrary(gameLibraryCtrl)
 
-		L = NewLobby(serviceMock)
+		serviceMock.EXPECT().Random().Return(randomMock)
+		serviceMock.EXPECT().LobbyHandler().Return(lobbyHandlerMock)
+
+		L = NewLobby(serviceMock, gameLibraryMock)
 	})
 
 	BeforeEach(func() {
@@ -48,15 +76,15 @@ var _ = Describe("Lobby", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		time.Sleep(1 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	})
 
 	It("should make first joiner a lobby owner", func() {
 		// given
-		clientOneMock.EXPECT().GetNickname().AnyTimes().Return("clientOne")
 		clientOneMock.EXPECT().GetID().AnyTimes().Return(clientOneId)
-		clientOneMock.EXPECT().SendMessage([]byte("10000000-0000-0000-0000-000000000000")).Times(1)
-		clientOneMock.EXPECT().SendMessage([]byte("New Player clientOne Joined")).Times(1)
+		clientOneMock.EXPECT().GetNickname().AnyTimes().Return(playerOne.nickname)
+		clientOneMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerID, playerOne.id)).Times(1)
+		clientOneMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerJoined, playerOne.nickname)).Times(1)
 
 		// when
 		L.handleJoin(clientOneMock)
@@ -67,12 +95,14 @@ var _ = Describe("Lobby", Ordered, func() {
 
 	It("new player joined lobby", func() {
 		// given
-		clientOneMock.EXPECT().SendMessage([]byte("New Player clientTwo Joined")).Times(1)
+		clientOneMock.EXPECT().GetID().AnyTimes().Return(clientOneId)
+
+		clientOneMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerJoined, playerTwo.nickname)).Times(1)
 
 		clientTwoMock.EXPECT().GetID().AnyTimes().Return(clientTwoId)
-		clientTwoMock.EXPECT().GetNickname().AnyTimes().Return("clientTwo")
-		clientTwoMock.EXPECT().SendMessage([]byte("00000000-0000-0000-0000-000000000000")).Times(1)
-		clientTwoMock.EXPECT().SendMessage([]byte("New Player clientTwo Joined")).Times(1)
+		clientTwoMock.EXPECT().GetNickname().AnyTimes().Return(playerTwo.nickname)
+		clientTwoMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerID, playerTwo.id)).Times(1)
+		clientTwoMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerJoined, playerTwo.nickname)).Times(1)
 
 		// when
 		L.handleJoin(clientTwoMock)
@@ -94,15 +124,7 @@ var _ = Describe("Lobby", Ordered, func() {
 
 	It("first player should start a game", func() {
 		// given
-		clientOneMock.EXPECT().GetReceiver().Times(1)
-		clientTwoMock.EXPECT().GetReceiver().Times(1)
-
-		clientOneMock.EXPECT().SendMessage([]byte(`{"Type":"StartOfGame","Message":""}`)).Times(1)
-		clientOneMock.EXPECT().SendMessage([]byte(`{"Type":"Scoreboard","Message":"{\"clientOne\":0,\"clientTwo\":0}"}`)).Times(1)
-		clientOneMock.EXPECT().SendMessage(gomock.Any()).Times(1)
-		clientTwoMock.EXPECT().SendMessage([]byte(`{"Type":"StartOfGame","Message":""}`)).Times(1)
-		clientTwoMock.EXPECT().SendMessage([]byte(`{"Type":"Scoreboard","Message":"{\"clientOne\":0,\"clientTwo\":0}"}`)).Times(1)
-		clientTwoMock.EXPECT().SendMessage(gomock.Any()).Times(1)
+		gameLibraryMock.EXPECT().StartNewGame(games.AvailableGamesMathOperations, gomock.Any())
 
 		// when
 		L.handleLobbyMessage(models.Message{
@@ -110,52 +132,6 @@ var _ = Describe("Lobby", Ordered, func() {
 			MessageDetails: models.MessageDetails{
 				Type:   models.MessageTypeLobby,
 				Action: models.ActionTypeStartGame,
-			},
-		})
-	})
-
-	It("first player correct guessed answers", func() {
-		// given
-		for i := range 9 {
-			clientOneMock.EXPECT().SendMessage([]byte(fmt.Sprintf(`{"Type":"Scoreboard","Message":"{\"clientOne\":%d,\"clientTwo\":0}"}`, i+1))).Times(1)
-			clientOneMock.EXPECT().SendMessage(gomock.Any()).Times(1)
-			clientTwoMock.EXPECT().SendMessage([]byte(fmt.Sprintf(`{"Type":"Scoreboard","Message":"{\"clientOne\":%d,\"clientTwo\":0}"}`, i+1))).Times(1)
-
-			answer := L.GetGame().GetRightAnswer(&i)
-			data := math_operations.UserMessageData{
-				Answer: answer,
-			}
-			byteData, _ := json.Marshal(data)
-
-			// when
-			L.handleMessage(models.Message{
-				SenderID: clientOneId,
-				MessageDetails: models.MessageDetails{
-					Type:   models.MessageTypeGame,
-					Action: models.ActionTypeGuessAnswer,
-					Data:   string(byteData),
-				},
-			})
-		}
-	})
-
-	It("first player should miss answer", func() {
-		clientOneMock.EXPECT().SendMessage([]byte(`{"Type":"Scoreboard","Message":"{\"clientOne\":8,\"clientTwo\":0}"}`)).Times(1)
-		clientOneMock.EXPECT().SendMessage([]byte(`{"Type":"FinishedGame","Message":""}`)).Times(1)
-		clientTwoMock.EXPECT().SendMessage([]byte(`{"Type":"Scoreboard","Message":"{\"clientOne\":8,\"clientTwo\":0}"}`)).Times(1)
-
-		data := math_operations.UserMessageData{
-			Answer: "some-random-answer",
-		}
-		byteData, _ := json.Marshal(data)
-
-		// when
-		L.handleMessage(models.Message{
-			SenderID: clientOneId,
-			MessageDetails: models.MessageDetails{
-				Type:   models.MessageTypeGame,
-				Action: models.ActionTypeGuessAnswer,
-				Data:   string(byteData),
 			},
 		})
 	})

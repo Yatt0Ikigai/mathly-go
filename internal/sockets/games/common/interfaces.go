@@ -1,4 +1,4 @@
-package utils
+package common_games
 
 import (
 	"mathly/internal/models"
