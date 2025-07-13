@@ -23,7 +23,7 @@ func mockSender(receiver chan shared.SocketResponse) func(shared.SocketResponse)
 	}
 }
 
-var _ = Describe("User", Ordered, func() {
+var _ = Describe("Questions", Ordered, func() {
 	playerOneReceiver := make(chan shared.SocketResponse, 10)
 	playerTwoReceiver := make(chan shared.SocketResponse, 10)
 
