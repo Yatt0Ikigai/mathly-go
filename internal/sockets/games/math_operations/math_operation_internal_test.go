@@ -3,6 +3,7 @@ package math_operations
 import (
 	"encoding/json"
 	"mathly/internal/infrastructure"
+	"mathly/internal/mocks"
 	"mathly/internal/models"
 	"mathly/internal/service"
 	"mathly/internal/shared"
@@ -52,14 +53,14 @@ var _ = Describe("User", Ordered, func() {
 		schedulerCtrl *gomock.Controller
 
 		randomMock    *service.MockRandom
-		schedulerMock *infrastructure.MockScheduler
+		schedulerMock *mocks.MockScheduler
 	)
 
 	BeforeEach(func() {
 		randomCtrl = gomock.NewController(GinkgoT())
 		schedulerCtrl = gomock.NewController(GinkgoT())
 		randomMock = service.NewMockRandom(randomCtrl)
-		schedulerMock = infrastructure.NewMockScheduler(schedulerCtrl)
+		schedulerMock = mocks.NewMockScheduler(schedulerCtrl)
 
 		broadcast = make(chan shared.SocketResponse, 10)
 
