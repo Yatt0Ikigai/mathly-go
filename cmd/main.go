@@ -6,6 +6,7 @@ import (
 	"mathly/internal/repository"
 	"mathly/internal/service"
 	"mathly/internal/sockets"
+	"mathly/internal/sockets/games"
 
 	"net/http"
 	"time"
@@ -35,7 +36,9 @@ func main() {
 	repositories := repository.NewRepositories(databases)
 	service := service.NewService(c.Services)
 
-	lobbyManager := sockets.NewLobbyManager()
+	gameLib := games.NewGameLibrary()
+
+	lobbyManager := sockets.NewLobbyManager(service, gameLib)
 	lobbySockets := controllers.NewLobbySockets(controllers.LobbySocketsControllerParameters{
 		Service:      service,
 		Databases:    databases,

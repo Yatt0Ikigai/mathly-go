@@ -30,6 +30,12 @@ type mathOperations struct {
 	questions      []MathQuestion
 	scoreBoard     map[uuid.UUID]int
 	playerQuestion map[uuid.UUID]int
+	events         scheduledEvents
+}
+
+type scheduledEvents struct {
+	EndOfGame   uuid.UUID
+	PlayerTurns map[uuid.UUID]*uuid.UUID
 }
 
 func (m mathOperations) InitGame(c common_games.GameConfig) MathOperations {
@@ -46,6 +52,8 @@ func (m mathOperations) InitGame(c common_games.GameConfig) MathOperations {
 	for range 10 {
 		m.questions = append(m.questions, m.generateAdditionQuestion())
 	}
+
+	m.events.PlayerTurns = make(map[uuid.UUID]*uuid.UUID)
 
 	return m
 }

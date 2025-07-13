@@ -11,23 +11,29 @@ import (
 )
 
 type LobbyManager interface {
-	CreateLobby(services service.Service, gameLibrary games.GameLibrary) Lobby
+	CreateLobby() Lobby
 	FindLobby(uuid.UUID) Lobby
 	ListLobbies() []uuid.UUID
 }
 
 type lobbyManager struct {
+	services    service.Service
+	gameLibrary games.GameLibrary
+
 	Lobbies map[uuid.UUID]Lobby
 }
 
-func NewLobbyManager() LobbyManager {
+func NewLobbyManager(services service.Service, gameLibrary games.GameLibrary) LobbyManager {
 	return &lobbyManager{
+		services:    services,
+		gameLibrary: gameLibrary,
+
 		Lobbies: make(map[uuid.UUID]Lobby),
 	}
 }
 
-func (l lobbyManager) CreateLobby(services service.Service, gameLibrary games.GameLibrary) Lobby {
-	lobby := NewLobby(services, gameLibrary)
+func (l lobbyManager) CreateLobby() Lobby {
+	lobby := NewLobby(l.services, l.gameLibrary)
 	id := lobby.GetID()
 	l.Lobbies[id] = lobby
 
