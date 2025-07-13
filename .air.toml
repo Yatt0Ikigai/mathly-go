@@ -4,4 +4,5 @@ bin = "tmp/main"
 include_ext = ["go", "tpl", "tmpl", "html"]
 exclude_dir = ["vendor", "tmp", "bin", ".git"]
 exclude_file = ["air.toml"]
-delve = false
+delve = true
+delveArgs = ["--listen=:2345", "--headless=true", "--api-version=2", "--accept-multiclient"]

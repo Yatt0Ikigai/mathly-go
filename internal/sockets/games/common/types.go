@@ -6,6 +6,7 @@ import (
 	"mathly/internal/service"
 	"mathly/internal/shared"
 
+	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
 )
 
@@ -29,4 +30,6 @@ type GameConfig struct {
 	Settings  GameSettings
 	Broadcast chan shared.SocketResponse
 	Players   map[uuid.UUID]models.Player
+	Scheduler gocron.Scheduler
+	EndGame   func()
 }

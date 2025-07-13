@@ -8,6 +8,7 @@ import (
 	"mathly/internal/sockets/games"
 	common_games "mathly/internal/sockets/games/common"
 
+	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
 )
 
@@ -207,6 +208,9 @@ func (l *lobby) handleMessage(msg models.Message) {
 func (l *lobby) handleLobbyMessage(msg models.Message) {
 	if msg.SenderID == l.GetOwnerID() {
 		if msg.Action == models.ActionTypeStartGame {
+			scheduler, _ := gocron.NewScheduler()
+			scheduler.Start()
+
 			l.Game = l.GameLibrary.StartNewGame(games.AvailableGamesMathOperations, common_games.GameConfig{
 				Services: common_games.GameServices{
 					Random: l.Services.Random,
@@ -214,7 +218,13 @@ func (l *lobby) handleLobbyMessage(msg models.Message) {
 				Settings:  common_games.GameSettings{},
 				Broadcast: l.Broadcast,
 				Players:   l.GetPlayers(),
+				Scheduler: scheduler,
+				EndGame: func() {
+					l.Game = nil
+				},
 			})
+
+			l.Game.StartTheGame()
 		}
 	}
 }

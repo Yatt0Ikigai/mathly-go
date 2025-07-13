@@ -35,7 +35,7 @@ func NewLobbyController(p LobbyControllerParameters) *lobbyController {
 }
 
 func (s *lobbyController) createLobby(c *gin.Context) {
-	lobby := s.lobbyManager.CreateLobby(s.service, s.gameLibrary)
+	lobby := s.lobbyManager.CreateLobby()
 
 	c.JSON(http.StatusOK, gin.H{
 		"lobbyID": lobby.GetID(),

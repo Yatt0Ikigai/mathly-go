@@ -7,11 +7,21 @@ import (
 	"mathly/internal/models"
 	"mathly/internal/shared"
 	math_operations_events "mathly/internal/sockets/games/math_operations/events"
+	"time"
 
+	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
 )
 
 func (m mathOperations) StartTheGame() {
+	m.config.Scheduler.NewJob(
+		gocron.DurationJob(5*time.Second),
+		gocron.NewTask(func() {
+			m.endGame()
+		}),
+		gocron.WithLimitedRuns(1),
+	)
+
 	m.broadcastStartOfGame()
 	m.broadcastScoreboard()
 	m.broadcastQuestion()
@@ -26,11 +36,23 @@ func (m mathOperations) broadcastStartOfGame() {
 }
 
 func (m mathOperations) broadcastGameEnd() {
+	scoreboard := map[string]int{}
+	for id, score := range m.scoreBoard {
+		scoreboard[m.config.Players[id].Nickname] = score
+	}
+
+	marshaledScoreboard, _ := json.Marshal(scoreboard)
+
 	m.config.Broadcast <- shared.CreateSocketResponse(
 		shared.EventLobby,
 		shared.LobbyEventEndOfGame,
-		"",
+		string(marshaledScoreboard),
 	)
+}
+
+func (m mathOperations) endGame() {
+	m.config.EndGame()
+	m.broadcastGameEnd()
 }
 
 func (m mathOperations) messagePlayer(playerID uuid.UUID, message shared.SocketResponse) {
@@ -123,6 +145,10 @@ func (m mathOperations) handleAnswerMessage(msg models.Message) {
 	p := m.findPlayerById(msg.SenderID)
 	if p == nil {
 		return // TODO
+	}
+
+	if m.playerQuestion[p.ConnectionID] >= 10 {
+		return
 	}
 
 	var data UserMessageData
