@@ -2,7 +2,6 @@ package math_operations
 
 import (
 	"encoding/json"
-	"mathly/internal/infrastructure"
 	"mathly/internal/mocks"
 	"mathly/internal/models"
 	"mathly/internal/service"
@@ -141,7 +140,7 @@ var _ = Describe("User", Ordered, func() {
 		It("should increase user score and send new question", func() {
 			// given
 			jobCtrl := gomock.NewController(GinkgoT())
-			jobMock := infrastructure.NewMockJob(jobCtrl)
+			jobMock := mocks.NewMockJob(jobCtrl)
 			jobMock.EXPECT().ID().Return(secondJobId)
 
 			schedulerMock.EXPECT().RemoveJob(jobId)
@@ -192,7 +191,7 @@ var _ = Describe("User", Ordered, func() {
 		It("should decrease user score and send new question", func() {
 			// given
 			jobCtrl := gomock.NewController(GinkgoT())
-			jobMock := infrastructure.NewMockJob(jobCtrl)
+			jobMock := mocks.NewMockJob(jobCtrl)
 			jobMock.EXPECT().ID().Return(secondJobId)
 
 			schedulerMock.EXPECT().RemoveJob(jobId)
