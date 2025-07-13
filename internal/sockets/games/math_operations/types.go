@@ -28,3 +28,7 @@ func (m MathQuestion) Byte() []byte {
 	}
 	return r
 }
+
+type UserMessageData struct {
+	Answer string `json:"answer"`
+}

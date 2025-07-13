@@ -207,10 +207,9 @@ func (l *lobby) handleMessage(msg models.Message) {
 
 func (l *lobby) handleLobbyMessage(msg models.Message) {
 	if msg.SenderID == l.GetOwnerID() {
-		if msg.Action == models.ActionTypeStartGame {
-			scheduler, _ := gocron.NewScheduler()
-			scheduler.Start()
+		scheduler, _ := gocron.NewScheduler()
 
+		if msg.Action == models.ActionTypeStartGame {
 			l.Game = l.GameLibrary.StartNewGame(games.AvailableGamesMathOperations, common_games.GameConfig{
 				Services: common_games.GameServices{
 					Random: l.Services.Random,
