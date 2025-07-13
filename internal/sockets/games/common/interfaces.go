@@ -1,3 +1,5 @@
+//go:generate mockgen -source=interfaces.go -package common_games -destination=interfaces_mock.go
+
 package common_games
 
 import (

@@ -5,6 +5,7 @@ import (
 	"mathly/internal/service"
 	"mathly/internal/shared"
 	"mathly/internal/sockets/games"
+	common_games "mathly/internal/sockets/games/common"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,10 +20,12 @@ var (
 	randomCtrl       *gomock.Controller
 	lobbyHandlerCtrl *gomock.Controller
 	gameLibraryCtrl  *gomock.Controller
+	gameCtrl         *gomock.Controller
 	serviceMock      *service.MockService
 	randomMock       *service.MockRandom
 	lobbyHandlerMock *service.MockLobbyHandler
 	gameLibraryMock  *games.MockGameLibrary
+	gameMock         *common_games.MockGame
 
 	clientOneCtrl *gomock.Controller
 	clientTwoCtrl *gomock.Controller
@@ -56,6 +59,7 @@ var _ = Describe("Lobby", Ordered, func() {
 		randomCtrl = gomock.NewController(GinkgoT())
 		lobbyHandlerCtrl = gomock.NewController(GinkgoT())
 		gameLibraryCtrl = gomock.NewController(GinkgoT())
+		gameCtrl = gomock.NewController(GinkgoT())
 
 		clientOneMock = NewMockClient(clientOneCtrl)
 		clientTwoMock = NewMockClient(clientTwoCtrl)
@@ -63,6 +67,7 @@ var _ = Describe("Lobby", Ordered, func() {
 		randomMock = service.NewMockRandom(randomCtrl)
 		lobbyHandlerMock = service.NewMockLobbyHandler(lobbyHandlerCtrl)
 		gameLibraryMock = games.NewMockGameLibrary(gameLibraryCtrl)
+		gameMock = common_games.NewMockGame(gameCtrl)
 
 		serviceMock.EXPECT().Random().Return(randomMock)
 		serviceMock.EXPECT().LobbyHandler().Return(lobbyHandlerMock)
@@ -124,7 +129,8 @@ var _ = Describe("Lobby", Ordered, func() {
 
 	It("first player should start a game", func() {
 		// given
-		gameLibraryMock.EXPECT().StartNewGame(games.AvailableGamesMathOperations, gomock.Any())
+		gameLibraryMock.EXPECT().StartNewGame(games.AvailableGamesMathOperations, gomock.Any()).Return(gameMock)
+		gameMock.EXPECT().StartTheGame()
 
 		// when
 		L.handleLobbyMessage(models.Message{

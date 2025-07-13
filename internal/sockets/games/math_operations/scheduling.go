@@ -27,7 +27,7 @@ func (m mathOperations) removePlayerTurnJob(pId uuid.UUID) {
 		return
 	}
 
-	m.config.Scheduler.RemoveJob(*previousJob)
+	_ = m.config.Scheduler.RemoveJob(*previousJob)
 	m.events.PlayerTurns[pId] = nil
 }
 

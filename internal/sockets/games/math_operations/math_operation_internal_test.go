@@ -2,12 +2,15 @@ package math_operations
 
 import (
 	"encoding/json"
+	"mathly/internal/infrastructure"
 	"mathly/internal/models"
 	"mathly/internal/service"
 	"mathly/internal/shared"
 	common_games "mathly/internal/sockets/games/common"
 	math_operations_events "mathly/internal/sockets/games/math_operations/events"
+	"time"
 
+	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -45,14 +48,18 @@ var _ = Describe("User", Ordered, func() {
 		broadcast         chan shared.SocketResponse
 		mathOperationGame mathOperations
 
-		randomCtrl *gomock.Controller
+		randomCtrl    *gomock.Controller
+		schedulerCtrl *gomock.Controller
 
-		randomMock *service.MockRandom
+		randomMock    *service.MockRandom
+		schedulerMock *infrastructure.MockScheduler
 	)
 
 	BeforeEach(func() {
 		randomCtrl = gomock.NewController(GinkgoT())
+		schedulerCtrl = gomock.NewController(GinkgoT())
 		randomMock = service.NewMockRandom(randomCtrl)
+		schedulerMock = infrastructure.NewMockScheduler(schedulerCtrl)
 
 		broadcast = make(chan shared.SocketResponse, 10)
 
@@ -63,6 +70,7 @@ var _ = Describe("User", Ordered, func() {
 			Settings:  common_games.GameSettings{},
 			Broadcast: broadcast,
 			Players:   players,
+			Scheduler: schedulerMock,
 		}
 
 		scoreboard := make(map[uuid.UUID]int)
@@ -109,6 +117,8 @@ var _ = Describe("User", Ordered, func() {
 		var (
 			correctAnswer   = "255"
 			incorrectAnswer = "2137"
+			jobId, _        = uuid.Parse("89f5b4df-d552-4f6f-9046-64b79f47cd7d")
+			secondJobId, _  = uuid.Parse("e9b4451e-b002-4636-867a-19032a6fac7c")
 		)
 
 		BeforeEach(func() {
@@ -123,10 +133,23 @@ var _ = Describe("User", Ordered, func() {
 					Answers:       []string{"D", "C"},
 					correctAnswer: correctAnswer},
 			}
+			mathOperationGame.events.PlayerTurns = make(map[uuid.UUID]*uuid.UUID)
+			mathOperationGame.events.PlayerTurns[playerOneId] = &jobId
 		})
 
 		It("should increase user score and send new question", func() {
 			// given
+			jobCtrl := gomock.NewController(GinkgoT())
+			jobMock := infrastructure.NewMockJob(jobCtrl)
+			jobMock.EXPECT().ID().Return(secondJobId)
+
+			schedulerMock.EXPECT().RemoveJob(jobId)
+			schedulerMock.EXPECT().NewJob(
+				gocron.DurationJob(30*time.Second),
+				gomock.Any(),
+				gomock.AssignableToTypeOf(gocron.WithLimitedRuns(1)),
+			).Return(jobMock, nil)
+
 			answer := UserMessageData{
 				Answer: correctAnswer,
 			}
@@ -162,10 +185,22 @@ var _ = Describe("User", Ordered, func() {
 
 			Expect(mathOperationGame.scoreBoard[playerOne.ConnectionID]).To(Equal(1))
 			Expect(mathOperationGame.playerQuestion[playerOne.ConnectionID]).To(Equal(1))
+			Expect(mathOperationGame.events.PlayerTurns[playerOneId]).To(Equal(&secondJobId))
 		})
 
 		It("should decrease user score and send new question", func() {
 			// given
+			jobCtrl := gomock.NewController(GinkgoT())
+			jobMock := infrastructure.NewMockJob(jobCtrl)
+			jobMock.EXPECT().ID().Return(secondJobId)
+
+			schedulerMock.EXPECT().RemoveJob(jobId)
+			schedulerMock.EXPECT().NewJob(
+				gocron.DurationJob(30*time.Second),
+				gomock.Any(),
+				gomock.AssignableToTypeOf(gocron.WithLimitedRuns(1)),
+			).Return(jobMock, nil)
+
 			answer := UserMessageData{
 				Answer: incorrectAnswer,
 			}
@@ -189,6 +224,7 @@ var _ = Describe("User", Ordered, func() {
 
 			Expect(mathOperationGame.scoreBoard[playerOne.ConnectionID]).To(Equal(-1))
 			Expect(mathOperationGame.playerQuestion[playerOne.ConnectionID]).To(Equal(1))
+			Expect(mathOperationGame.events.PlayerTurns[playerOneId]).To(Equal(&secondJobId))
 		})
 	})
 })

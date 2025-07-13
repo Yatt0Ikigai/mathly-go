@@ -17,7 +17,7 @@ func (m mathOperations) StartTheGame() {
 
 func (m mathOperations) endGame() {
 	m.config.EndGame()
-	m.config.Scheduler.Shutdown()
+	_ = m.config.Scheduler.Shutdown()
 	m.broadcastGameEnd()
 }
 
