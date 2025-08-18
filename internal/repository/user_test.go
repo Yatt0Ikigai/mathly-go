@@ -58,7 +58,7 @@ var _ = Describe("User", Ordered, func() {
 			Expect(user.Nickname).To(Equal("nickname"))
 		})
 
-		It("GetByEmail should find a user by id in the db", func() {
+		It("GetByEmail shouldn't find a user by id in the db", func() {
 			// given
 			// when
 			user, err := userRepository.GetByEmail("invalidEmail")

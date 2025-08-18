@@ -91,20 +91,62 @@ func (o *oAuthController) googleCallback(c *gin.Context) {
 	var userData models.OAuthResponse
 	_ = json.Unmarshal(data, &userData)
 
-	_, err = o.userRepository.Insert(&models.User{
-		ID:        uuid.New(),
-		Email:     userData.Email,
-		Nickname:  userData.Name,
-		Hash:      "123",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	})
-
+	dbUser, err := o.userRepository.GetByEmail(userData.Email)
 	if err != nil {
-		fmt.Printf("User creation failed due to %s", err.Error())
-		c.String(http.StatusNotFound, "User creation failed")
+		c.String(http.StatusInternalServerError, "Get by email Failed")
 		return
 	}
 
-	c.String(http.StatusOK, `ok`)
+	fmt.Printf("%+v", dbUser)
+
+	if dbUser == nil {
+		u, err := o.userRepository.Insert(&models.User{
+			ID:        uuid.New(),
+			Email:     userData.Email,
+			Nickname:  userData.Name,
+			Hash:      "",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		})
+
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Couldn't insert user")
+			return
+		}
+		dbUser = &u
+	}
+
+	accessToken, err := o.jwtService.GenerateToken(dbUser, service.Access)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Couldn't generate access token")
+		return
+	}
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		Path:     "/",
+		HttpOnly: false,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+	})
+
+	o.closePage(c, accessToken)
+}
+
+func (o *oAuthController) closePage(c *gin.Context, token string) {
+	// Respond with HTML that closes the window
+	c.Data(200, "text/html; charset=utf-8", []byte(fmt.Sprintf(`
+        <html>
+          <body>
+            <script>
+              if (window.opener) {
+                // notify main window
+                window.opener.postMessage({ type: "OAUTH_SUCCESS", token: "%s"  }, "http://localhost:5173");
+              }
+              window.close(); // close this popup
+            </script>
+          </body>
+        </html>
+    `, token)))
 }

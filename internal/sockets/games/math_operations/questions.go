@@ -48,7 +48,7 @@ func (m mathOperations) GetRightAnswer(q *int) string {
 	return m.questions[qNumber].correctAnswer
 }
 
-func (m mathOperations) handleAnswer(pId uuid.UUID, correctAnswer bool) {
+func (m *mathOperations) handleAnswer(pId uuid.UUID, correctAnswer bool) {
 	p := m.config.Players[pId]
 	if m.playerQuestion[pId] >= 10 {
 		return
@@ -66,6 +66,12 @@ func (m mathOperations) handleAnswer(pId uuid.UUID, correctAnswer bool) {
 
 	if m.playerQuestion[pId] >= 10 {
 		m.sendGameEnd(pId)
+		m.stillPlaying -= 1
+
+		if m.stillPlaying <= 0 {
+			m.endGame()
+		}
+
 		return
 	}
 
