@@ -40,9 +40,9 @@ func main() {
 
 	lobbyManager := sockets.NewLobbyManager(service, gameLib)
 	lobbySockets := controllers.NewLobbySockets(controllers.LobbySocketsControllerParameters{
-		Service:      service,
-		Databases:    databases,
-		LobbyManager: lobbyManager,
+		Service:        service,
+		LobbyManager:   lobbyManager,
+		UserRepository: repositories.User(),
 	})
 
 	lobbyRest := controllers.NewLobbyController(controllers.LobbyControllerParameters{
@@ -91,8 +91,8 @@ func CORSMiddleware() gin.HandlerFunc {
 		// Handle preflight (OPTIONS) requests early
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
-			return;
-		}	
+			return
+		}
 
 		c.Next()
 	}

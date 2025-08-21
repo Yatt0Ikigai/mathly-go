@@ -13,22 +13,23 @@ import (
 )
 
 type lobbySocketsController struct {
-	service      service.Service
-	databases    repository.Databases
-	lobbyManager sockets.LobbyManager
+	service        service.Service
+	userRepository repository.User
+	lobbyManager   sockets.LobbyManager
 }
 
 type LobbySocketsControllerParameters struct {
-	Service      service.Service
-	Databases    repository.Databases
-	LobbyManager sockets.LobbyManager
+	Service        service.Service
+	LobbyManager   sockets.LobbyManager
+	UserRepository repository.User
 }
 
+// Dodaj pobieranie username z DB po context'cie
 func NewLobbySockets(p LobbySocketsControllerParameters) *lobbySocketsController {
 	return &lobbySocketsController{
-		service:      p.Service,
-		databases:    p.Databases,
-		lobbyManager: p.LobbyManager,
+		service:        p.Service,
+		userRepository: p.UserRepository,
+		lobbyManager:   p.LobbyManager,
 	}
 }
 
@@ -44,10 +45,28 @@ func (s lobbySocketsController) joinLobby(c *gin.Context) {
 	}
 	defer conn.Close()
 	id := c.Param("id")
-	nickname := c.Query("nickname")
-	if nickname == "" {
+
+	contextUserID, exists := c.Get("userID")
+	if !exists {
+		log.Log.Errorln("Couldn't retrieve userId from cookies")
+		return
+	}
+
+	userID, err := uuid.Parse(contextUserID.(string))
+	if err != nil {
+		log.Log.Errorln("There was an error during parsing %s context user ID to UUID", userID)
+		return
+	}
+
+	user, err := s.userRepository.GetByID(userID)
+	if err != nil {
+		log.Log.Errorln("There was an error during parsing %s context user ID to UUID", userID)
+		return
+	}
+
+	if user == nil {
 		if err = conn.WriteJSON(map[string]string{
-			"message": "User not passed nickname",
+			"message": "Couldn't retrieve session user",
 		}); err != nil {
 			log.Log.Errorln(err)
 		}
@@ -70,7 +89,7 @@ func (s lobbySocketsController) joinLobby(c *gin.Context) {
 				log.Log.Errorln(err)
 			}
 		} else {
-			sockets.NewClient(conn, l, nickname)
+			sockets.NewClient(conn, l, user.Nickname)
 			if err = conn.WriteJSON(map[string]string{
 				"message": "User connected",
 			}); err != nil {

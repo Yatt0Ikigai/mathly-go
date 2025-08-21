@@ -44,6 +44,30 @@ var _ = Describe("User", Ordered, func() {
 		Expect(err).To(BeNil())
 	})
 
+	Describe("GetByID", func() {
+		It("should find a user by id in the db", func() {
+			// given
+			// when
+			user, err := userRepository.GetByID(ID)
+			// then
+			Expect(err).To(BeNil())
+			Expect(user).NotTo(BeNil())
+			Expect(user.ID).To(Equal(ID))
+			Expect(user.Email).To(Equal("a@gmail.com"))
+			Expect(user.Hash).To(Equal("hash"))
+			Expect(user.Nickname).To(Equal("nickname"))
+		})
+
+		It("GetByEmail shouldn't find a user by id in the db", func() {
+			// given
+			// when
+			user, err := userRepository.GetByEmail("invalidEmail")
+			// then
+			Expect(err).To(BeNil())
+			Expect(user).To(BeNil())
+		})
+	})
+
 	Describe("GetByEmail", func() {
 		It("GetByEmail should find a user by id in the db", func() {
 			// given

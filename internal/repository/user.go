@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 
 	"fmt"
@@ -11,6 +12,7 @@ import (
 )
 
 type User interface {
+	GetByID(id uuid.UUID) (*models.User, error)
 	GetByEmail(email string) (*models.User, error)
 	Insert(user *models.User) (models.User, error)
 }
@@ -42,6 +44,30 @@ func (u *user) GetByEmail(email string) (*models.User, error) {
 			return nil, nil
 		}
 		return &user, fmt.Errorf("failure while looking up user with email %s : %v", email, err)
+	}
+
+	return &user, nil
+}
+
+func (u *user) GetByID(id uuid.UUID) (*models.User, error) {
+	var user models.User
+
+	row := u.db.QueryRow(`SELECT id, email, nickname, password_hash, created_at, updated_at FROM users WHERE id = $1 ;`, id)
+
+	err := row.Scan(
+		&user.ID,
+		&user.Email,
+		&user.Nickname,
+		&user.Hash,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return &user, fmt.Errorf("failure while looking up user with id %s : %v", id, err)
 	}
 
 	return &user, nil

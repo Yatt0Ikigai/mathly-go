@@ -14,6 +14,7 @@ import (
 
 type Lobby interface {
 	GetID() uuid.UUID
+	GetSettings() models.LobbySettings
 	GetOwnerID() uuid.UUID
 	GetClientBySocketID(socketID uuid.UUID) Client
 	GetPlayersNicknamesWithout(string) []string
@@ -38,7 +39,8 @@ type LobbyServices struct {
 }
 
 type lobby struct {
-	ID uuid.UUID
+	ID       uuid.UUID
+	Settings models.LobbySettings
 
 	Owner Client
 
@@ -54,12 +56,13 @@ type lobby struct {
 	GameLibrary games.GameLibrary
 }
 
-func NewLobby(services service.Service, gameLib games.GameLibrary) Lobby {
+func NewLobby(services service.Service, gameLib games.GameLibrary, settings models.LobbySettings) Lobby {
 	id := uuid.New()
 	maxMessageAmount := 10
 
 	l := lobby{
 		ID:          id,
+		Settings:    settings,
 		GameLibrary: gameLib,
 		Services: LobbyServices{
 			LobbyHandler: services.LobbyHandler(),
@@ -226,4 +229,8 @@ func (l *lobby) handleLobbyMessage(msg models.Message) {
 			l.Game.StartTheGame()
 		}
 	}
+}
+
+func (l *lobby) GetSettings() models.LobbySettings {
+	return l.Settings
 }

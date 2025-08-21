@@ -72,7 +72,7 @@ var _ = Describe("Lobby", Ordered, func() {
 		serviceMock.EXPECT().Random().Return(randomMock)
 		serviceMock.EXPECT().LobbyHandler().Return(lobbyHandlerMock)
 
-		L = NewLobby(serviceMock, gameLibraryMock)
+		L = NewLobby(serviceMock, gameLibraryMock, models.LobbySettings{})
 	})
 
 	BeforeEach(func() {
