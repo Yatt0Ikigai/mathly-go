@@ -5,6 +5,7 @@ import (
 	"mathly/internal/repository"
 	"mathly/internal/service"
 	"mathly/internal/sockets"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -38,29 +39,21 @@ func (s lobbySocketsController) joinLobby(c *gin.Context) {
 	var parsedID uuid.UUID
 	var err error
 
-	conn, err = sockets.Upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		log.Log.Errorln(err)
-		return
-	}
-	defer conn.Close()
-	id := c.Param("id")
-
-	contextUserID, exists := c.Get("userID")
-	if !exists {
-		log.Log.Errorln("Couldn't retrieve userId from cookies")
+	tokenCookie, err := c.Cookie("access_token")
+	if tokenCookie == "" || err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
 		return
 	}
 
-	userID, err := uuid.Parse(contextUserID.(string))
+	claims, err := s.service.JWT().ValidateToken(tokenCookie, service.Access)
 	if err != nil {
-		log.Log.Errorln("There was an error during parsing %s context user ID to UUID", userID)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "expired token"})
 		return
 	}
 
-	user, err := s.userRepository.GetByID(userID)
+	user, err := s.userRepository.GetByID(claims.UserID)
 	if err != nil {
-		log.Log.Errorln("There was an error during parsing %s context user ID to UUID", userID)
+		log.Log.Errorln("There was an error during parsing %s context user ID to UUID", claims.UserID)
 		return
 	}
 
@@ -72,6 +65,14 @@ func (s lobbySocketsController) joinLobby(c *gin.Context) {
 		}
 		return
 	}
+
+	conn, err = sockets.Upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Log.Errorln(err)
+		return
+	}
+	defer conn.Close()
+	id := c.Param("id")
 
 	parsedID, err = uuid.Parse(id)
 	if err != nil {
@@ -100,5 +101,5 @@ func (s lobbySocketsController) joinLobby(c *gin.Context) {
 }
 
 func (s lobbySocketsController) RegisterLobbyHandlers(router gin.IRouter) {
-	router.GET("/join-lobby/:id", s.joinLobby)
+	router.GET("/:id/join", s.joinLobby)
 }

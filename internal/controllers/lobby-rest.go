@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"mathly/internal/controllers/auth"
 	"mathly/internal/models"
 	"mathly/internal/repository"
 	"mathly/internal/service"
@@ -57,6 +58,8 @@ func (s *lobbyController) obtainLobbies(c *gin.Context) {
 }
 
 func (s *lobbyController) RegisterLobbyRestHandlers(router gin.IRouter) {
-	router.POST("/create-lobby", s.createLobby)
-	router.GET("/obtain-lobbies", s.obtainLobbies)
+	protected := router.Group("/lobby")
+	protected.Use(auth.AuthMiddleware(s.service.JWT()))
+	protected.POST("", s.createLobby);
+	protected.GET("", s.obtainLobbies);
 }

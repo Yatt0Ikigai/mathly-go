@@ -1,7 +1,7 @@
 package sockets
 
 import (
-	"fmt"
+	"mathly/internal/log"
 	"mathly/internal/models"
 	"mathly/internal/service"
 	"mathly/internal/shared"
@@ -197,18 +197,19 @@ func (l *lobby) handleLeave(c Client) {
 }
 
 func (l *lobby) handleMessage(msg models.Message) {
+	log.Log.Infof("%+v", msg)
 	if msg.Type == models.MessageTypeLobby {
 		l.handleLobbyMessage(msg)
+		return
 	}
 	if msg.Type == models.MessageTypeGame && l.Game != nil {
 		l.Game.HandleMessage(msg)
-	}
-	if msg.Type == models.MessageTypeLobby {
-		fmt.Println("do sth")
+		return
 	}
 }
 
 func (l *lobby) handleLobbyMessage(msg models.Message) {
+	log.Log.Infof("owner ID %s", l.GetOwnerID());
 	if msg.SenderID == l.GetOwnerID() {
 		scheduler, _ := gocron.NewScheduler()
 

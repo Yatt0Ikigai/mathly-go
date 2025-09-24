@@ -97,8 +97,6 @@ func (o *oAuthController) googleCallback(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("%+v", dbUser)
-
 	if dbUser == nil {
 		u, err := o.userRepository.Insert(&models.User{
 			ID:        uuid.New(),
@@ -122,15 +120,6 @@ func (o *oAuthController) googleCallback(c *gin.Context) {
 		return
 	}
 
-	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     "access_token",
-		Value:    accessToken,
-		Path:     "/",
-		HttpOnly: false,
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-	})
-
 	o.closePage(c, accessToken)
 }
 
@@ -142,7 +131,7 @@ func (o *oAuthController) closePage(c *gin.Context, token string) {
             <script>
               if (window.opener) {
                 // notify main window
-                window.opener.postMessage({ type: "OAUTH_SUCCESS", token: "%s"  }, "http://localhost:5173");
+                window.opener.postMessage({ type: "OAUTH_SUCCESS", token: "Bearer %s"  }, "http://localhost:5173");
               }
               window.close(); // close this popup
             </script>

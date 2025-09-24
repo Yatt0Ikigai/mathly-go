@@ -53,18 +53,18 @@ func main() {
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowMethods:     []string{"GET", "POST"},
+		AllowOrigins:     []string{"http://localhost:5173"}, // frontend URL,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Content-Type", "Content-Length", "Accept-Encoding", "Authorization", "Cache-Control"},
 		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers"},
 		AllowCredentials: true,
-		AllowAllOrigins:  true,
 		AllowWebSockets:  true,
 	}))
 
 	r.Use(CORSMiddleware())
 
-	oAuthController := auth.NewOAuthController(repositories.User(), service.JWT(), c.OAuth)
-	oAuthController.InitGoogleOAuth(r)
+	oAuthController := auth.NewAuthController(repositories.User(), service.JWT(), c.OAuth)
+	oAuthController.RegisterAuthEndpoints(r)
 	lobbySockets.RegisterLobbyHandlers(r)
 	lobbyRest.RegisterLobbyRestHandlers(r)
 
@@ -79,6 +79,8 @@ func main() {
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
+
+		log.Log.Infof("%s Origin", origin)
 
 		// Allow requests from localhost frontend
 		if origin == "http://localhost:5173" {

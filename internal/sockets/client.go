@@ -63,13 +63,16 @@ func NewClient(conn *websocket.Conn, l Lobby, nickname string) Client {
 }
 
 func (c *client) Read() {
-	defer c.Socket.Close()
+	defer func() {
+		c.Socket.Close()
+	}()
+
 	for {
 		_, msg, err := c.Socket.ReadMessage()
 		fmt.Println("Received message: ", string(msg))
 		if err != nil {
 			_ = fmt.Errorf("there was a error when reading message for Client: %w", err)
-			continue
+			break // stop reading on error;
 		}
 		var data models.MessageDetails
 		err = json.Unmarshal(msg, &data)
