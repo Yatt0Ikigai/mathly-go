@@ -3,7 +3,6 @@ package sockets
 
 import (
 	"encoding/json"
-	"fmt"
 	"mathly/internal/log"
 	"mathly/internal/models"
 	"mathly/internal/shared"
@@ -52,27 +51,23 @@ func NewClient(conn *websocket.Conn, l Lobby, nickname string) Client {
 
 	l.JoinLobby(c)
 
-	defer func() {
-		l.LeaveLobby(c)
-	}()
-
 	go c.Write()
-	c.Read()
+	c.Read() // blocks until client disconnects
+
+	// cleanup after read loop exits
+	l.LeaveLobby(c)
+	c.Socket.Close()
 
 	return c
 }
 
 func (c *client) Read() {
-	defer func() {
-		c.Socket.Close()
-	}()
-
 	for {
 		_, msg, err := c.Socket.ReadMessage()
-		fmt.Println("Received message: ", string(msg))
+		log.Log.Infof("Received message: ", string(msg))
 		if err != nil {
-			_ = fmt.Errorf("there was a error when reading message for Client: %w", err)
-			break // stop reading on error;
+			log.Log.Errorf("there was a error when reading message for Client: %+v", err)
+			return // stop reading on error;
 		}
 		var data models.MessageDetails
 		err = json.Unmarshal(msg, &data)
@@ -88,11 +83,11 @@ func (c *client) Read() {
 }
 
 func (c *client) Write() {
-	defer c.Socket.Close()
 	for msg := range c.Receive {
-		fmt.Println("Writing message: ", string(msg))
+		log.Log.Infof("Writing message: ", string(msg))
 		err := c.Socket.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
+			log.Log.Errorf("write error for client %s: %v", c.Nickname, err)
 			return
 		}
 	}

@@ -57,8 +57,9 @@ func (j *jwt) GenerateToken(user *models.User, tokenType TokenType) (string, err
 	}
 
 	claims := &models.Claims{
-		UserID: user.ID,
-		Email:  user.Email,
+		UserID:   user.ID,
+		Email:    user.Email,
+		Nickname: user.Nickname,
 		StandardClaims: jwtLib.StandardClaims{
 			ExpiresAt: expirationTime,
 			Issuer:    "mathly",
