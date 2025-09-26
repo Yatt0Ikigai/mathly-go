@@ -46,6 +46,7 @@ func (l lobbyManager) CreateLobby(data models.CreateLobbyRequest) Lobby {
 		LobbyType:  data.Type,
 		Password:   password,
 	})
+	lobby.Start()
 	id := lobby.GetID()
 	l.Lobbies[id] = lobby
 

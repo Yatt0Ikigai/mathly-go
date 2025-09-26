@@ -32,3 +32,10 @@ func (l LobbySettings) DefaultSettings() LobbySettings {
 		LobbyType:  LobbyTypePublic,
 	}
 }
+
+type LobbyPlayer struct {
+	ConnectionID uuid.UUID `json:"connectionId"`
+	Nickname     string    `json:"nickname"`
+	AvatarUrl    string    `json:"avatarUrl"`
+	Permission   int       `json:"permission"` // 0 - normal player, 1 - host // later change it
+}

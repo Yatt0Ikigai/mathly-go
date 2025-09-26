@@ -60,6 +60,6 @@ func (s *lobbyController) obtainLobbies(c *gin.Context) {
 func (s *lobbyController) RegisterLobbyRestHandlers(router gin.IRouter) {
 	protected := router.Group("/lobby")
 	protected.Use(auth.AuthMiddleware(s.service.JWT()))
-	protected.POST("", s.createLobby);
-	protected.GET("", s.obtainLobbies);
+	protected.POST("", s.createLobby)
+	protected.GET("", s.obtainLobbies)
 }

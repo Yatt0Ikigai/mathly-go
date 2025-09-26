@@ -98,7 +98,9 @@ func (o *oAuthController) googleCallback(c *gin.Context) {
 	}
 
 	if dbUser == nil {
-		u, err := o.userRepository.Insert(&models.User{
+		var u models.User
+
+		u, err = o.userRepository.Insert(&models.User{
 			ID:        uuid.New(),
 			Email:     userData.Email,
 			Nickname:  userData.Name,
@@ -111,6 +113,7 @@ func (o *oAuthController) googleCallback(c *gin.Context) {
 			c.String(http.StatusInternalServerError, "Couldn't insert user")
 			return
 		}
+
 		dbUser = &u
 	}
 
