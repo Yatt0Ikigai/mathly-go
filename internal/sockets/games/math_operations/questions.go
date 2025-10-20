@@ -79,7 +79,7 @@ func (m *mathOperations) handleAnswer(pId uuid.UUID, correctAnswer bool) {
 	p.SendMessage(shared.CreateSocketResponse(
 		shared.EventGame,
 		math_operations_events.MathOperationsEventQuestion,
-		nextQuestion.String(),
+		nextQuestion,
 	))
 
 	m.addPlayerTurnJob(pId)

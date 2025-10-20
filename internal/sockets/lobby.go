@@ -1,7 +1,6 @@
 package sockets
 
 import (
-	"encoding/json"
 	"mathly/internal/log"
 	"mathly/internal/models"
 	"mathly/internal/service"
@@ -222,16 +221,10 @@ func (l *lobby) SendPlayerInfo(c Client) {
 			msg.Permission = 1
 		}
 
-		marshaledMsg, err := json.Marshal(msg)
-		if err != nil {
-			log.Log.Errorf("Error during marshaling msg: %v", err)
-			return
-		}
-
 		c.SendMessage(shared.CreateSocketResponse(
 			shared.EventLobby,
 			shared.LobbyEventPlayerInfo,
-			string(marshaledMsg),
+			msg,
 		))
 		return
 	}
