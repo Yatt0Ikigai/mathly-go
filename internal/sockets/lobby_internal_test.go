@@ -72,7 +72,11 @@ var _ = Describe("Lobby", Ordered, func() {
 		serviceMock.EXPECT().Random().Return(randomMock)
 		serviceMock.EXPECT().LobbyHandler().Return(lobbyHandlerMock)
 
-		L = NewLobby(serviceMock, gameLibraryMock)
+		L = NewLobby(serviceMock, gameLibraryMock, models.LobbySettings{})
+		go func() {
+			defer GinkgoRecover()
+			L.(*lobby).run()
+		}()
 	})
 
 	BeforeEach(func() {
@@ -88,8 +92,8 @@ var _ = Describe("Lobby", Ordered, func() {
 		// given
 		clientOneMock.EXPECT().GetID().AnyTimes().Return(clientOneId)
 		clientOneMock.EXPECT().GetNickname().AnyTimes().Return(playerOne.nickname)
-		clientOneMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerID, playerOne.id)).Times(1)
-		clientOneMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerJoined, playerOne.nickname)).Times(1)
+		clientOneMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerInfo, "{\"connectionId\":\"95f3cec5-ca92-45a4-a3b7-b5001eaad1b4\",\"nickname\":\"clientOne\",\"avatarUrl\":\"\",\"permission\":1}")).Times(1)
+		clientOneMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerList, "[{\"connectionId\":\"95f3cec5-ca92-45a4-a3b7-b5001eaad1b4\",\"nickname\":\"clientOne\",\"avatarUrl\":\"\",\"permission\":1}]")).Times(1)
 
 		// when
 		L.handleJoin(clientOneMock)
@@ -102,12 +106,19 @@ var _ = Describe("Lobby", Ordered, func() {
 		// given
 		clientOneMock.EXPECT().GetID().AnyTimes().Return(clientOneId)
 
-		clientOneMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerJoined, playerTwo.nickname)).Times(1)
+		clientTwoMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerInfo,
+			models.LobbyPlayer{
+				ConnectionID: clientTwoId,
+				Nickname:     "clientTwo",
+				Permission:   0,
+				AvatarUrl:    "",
+			})).Times(1)
+
+		clientOneMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerList, "[{\"connectionId\":\"95f3cec5-ca92-45a4-a3b7-b5001eaad1b4\",\"nickname\":\"clientOne\",\"avatarUrl\":\"\",\"permission\":1},{\"connectionId\":\"b1eb7314-459d-4e4f-90ed-b79e1f8add5a\",\"nickname\":\"clientTwo\",\"avatarUrl\":\"\",\"permission\":0}]")).Times(1)
+		clientTwoMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerList, "[{\"connectionId\":\"95f3cec5-ca92-45a4-a3b7-b5001eaad1b4\",\"nickname\":\"clientOne\",\"avatarUrl\":\"\",\"permission\":1},{\"connectionId\":\"b1eb7314-459d-4e4f-90ed-b79e1f8add5a\",\"nickname\":\"clientTwo\",\"avatarUrl\":\"\",\"permission\":0}]")).Times(1)
 
 		clientTwoMock.EXPECT().GetID().AnyTimes().Return(clientTwoId)
 		clientTwoMock.EXPECT().GetNickname().AnyTimes().Return(playerTwo.nickname)
-		clientTwoMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerID, playerTwo.id)).Times(1)
-		clientTwoMock.EXPECT().SendMessage(shared.CreateSocketResponse(shared.EventLobby, shared.LobbyEventPlayerJoined, playerTwo.nickname)).Times(1)
 
 		// when
 		L.handleJoin(clientTwoMock)

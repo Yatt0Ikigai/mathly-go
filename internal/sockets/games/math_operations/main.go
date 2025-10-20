@@ -31,6 +31,7 @@ type mathOperations struct {
 	scoreBoard     map[uuid.UUID]int
 	playerQuestion map[uuid.UUID]int
 	events         scheduledEvents
+	stillPlaying   int
 }
 
 type scheduledEvents struct {
@@ -54,8 +55,9 @@ func (m mathOperations) InitGame(c common_games.GameConfig) MathOperations {
 	}
 
 	m.events.PlayerTurns = make(map[uuid.UUID]*uuid.UUID)
+	m.stillPlaying = len(c.Players)
 
-	return m
+	return &m
 }
 
 func InitMathOperationsGame(c common_games.GameConfig) MathOperations {

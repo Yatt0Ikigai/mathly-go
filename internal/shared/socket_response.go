@@ -40,10 +40,24 @@ func (s SocketResponse) ToByte() []byte {
 	return m
 }
 
-func CreateSocketResponse(e Event, eT eventType, d string) SocketResponse {
+func CreateSocketResponse(e Event, eT eventType, d any) SocketResponse {
+	var dataStr string
+
+	switch v := d.(type) {
+	case string:
+		dataStr = v
+	default:
+		// Try to marshal anything else to JSON
+		if b, err := json.Marshal(v); err == nil {
+			dataStr = string(b)
+		} else {
+			dataStr = ""
+		}
+	}
+
 	return SocketResponse{
 		Event: e,
 		Type:  eT.String(),
-		Data:  d,
+		Data:  dataStr,
 	}
 }

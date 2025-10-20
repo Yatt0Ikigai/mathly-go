@@ -1,7 +1,7 @@
 package sockets
 
 import (
-	"fmt"
+	"mathly/internal/log"
 	"mathly/internal/models"
 	"mathly/internal/service"
 	"mathly/internal/shared"
@@ -14,11 +14,13 @@ import (
 
 type Lobby interface {
 	GetID() uuid.UUID
+	GetSettings() models.LobbySettings
 	GetOwnerID() uuid.UUID
 	GetClientBySocketID(socketID uuid.UUID) Client
 	GetPlayersNicknamesWithout(string) []string
 	GetPlayers() map[uuid.UUID]models.Player
 	GetGame() common_games.Game
+	Start()
 
 	JoinLobby(Client)
 	LeaveLobby(Client)
@@ -38,7 +40,8 @@ type LobbyServices struct {
 }
 
 type lobby struct {
-	ID uuid.UUID
+	ID       uuid.UUID
+	Settings models.LobbySettings
 
 	Owner Client
 
@@ -54,12 +57,13 @@ type lobby struct {
 	GameLibrary games.GameLibrary
 }
 
-func NewLobby(services service.Service, gameLib games.GameLibrary) Lobby {
+func NewLobby(services service.Service, gameLib games.GameLibrary, settings models.LobbySettings) Lobby {
 	id := uuid.New()
 	maxMessageAmount := 10
 
 	l := lobby{
 		ID:          id,
+		Settings:    settings,
 		GameLibrary: gameLib,
 		Services: LobbyServices{
 			LobbyHandler: services.LobbyHandler(),
@@ -73,9 +77,11 @@ func NewLobby(services service.Service, gameLib games.GameLibrary) Lobby {
 		Broadcast: make(chan shared.SocketResponse, maxMessageAmount),
 	}
 
-	go l.run()
-
 	return &l
+}
+
+func (l *lobby) Start() {
+	go l.run()
 }
 
 func (l *lobby) run() {
@@ -168,40 +174,78 @@ func (l *lobby) handleJoin(c Client) {
 		l.Owner = c
 	}
 
-	l.Broadcast <- shared.CreateSocketResponse(
-		shared.EventLobby,
-		shared.LobbyEventPlayerJoined,
-		c.GetNickname(),
-	)
 	l.Clients[c] = true
 
-	c.SendMessage(shared.CreateSocketResponse(
+	l.SendPlayersList()
+	l.SendPlayerInfo(c)
+}
+
+func (l *lobby) SendPlayersList() {
+	var playersMessage []models.LobbyPlayer
+	players := l.GetPlayers()
+	ownerId := l.Owner.GetID()
+	for _, p := range players {
+		msg := models.LobbyPlayer{
+			ConnectionID: p.ConnectionID,
+			Nickname:     p.Nickname,
+		}
+
+		if p.ConnectionID == ownerId {
+			msg.Permission = 1
+		}
+
+		playersMessage = append(playersMessage, msg)
+	}
+
+	l.Broadcast <- shared.CreateSocketResponse(
 		shared.EventLobby,
-		shared.LobbyEventPlayerID,
-		c.GetID().String(),
-	))
+		shared.LobbyEventPlayerList,
+		playersMessage,
+	)
+}
+
+func (l *lobby) SendPlayerInfo(c Client) {
+	players := l.GetPlayers()
+	ownerId := l.Owner.GetID()
+	for _, p := range players {
+		if p.ConnectionID != c.GetID() {
+			continue
+		}
+
+		msg := models.LobbyPlayer{
+			ConnectionID: p.ConnectionID,
+			Nickname:     p.Nickname,
+		}
+
+		if p.ConnectionID == ownerId {
+			msg.Permission = 1
+		}
+
+		c.SendMessage(shared.CreateSocketResponse(
+			shared.EventLobby,
+			shared.LobbyEventPlayerInfo,
+			msg,
+		))
+		return
+	}
 }
 
 func (l *lobby) handleLeave(c Client) {
 	delete(l.Clients, c)
 	c.Close()
 
-	l.Broadcast <- shared.CreateSocketResponse(
-		shared.EventLobby,
-		shared.LobbyEventPlayerLeft,
-		c.GetNickname(),
-	)
+	l.SendPlayersList()
 }
 
 func (l *lobby) handleMessage(msg models.Message) {
+	log.Log.Infof("%+v", msg)
 	if msg.Type == models.MessageTypeLobby {
 		l.handleLobbyMessage(msg)
+		return
 	}
 	if msg.Type == models.MessageTypeGame && l.Game != nil {
 		l.Game.HandleMessage(msg)
-	}
-	if msg.Type == models.MessageTypeLobby {
-		fmt.Println("do sth")
+		return
 	}
 }
 
@@ -226,4 +270,8 @@ func (l *lobby) handleLobbyMessage(msg models.Message) {
 			l.Game.StartTheGame()
 		}
 	}
+}
+
+func (l *lobby) GetSettings() models.LobbySettings {
+	return l.Settings
 }

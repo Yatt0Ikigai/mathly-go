@@ -1,12 +1,9 @@
 package repository_test
 
 import (
-	// "mathly/internal/models"
 	"mathly/internal/models"
 	"mathly/internal/repository"
 	"time"
-
-	// "time"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -34,7 +31,7 @@ var _ = Describe("User", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		_, err := databases.DB().Query("DELETE from users")
+		_, err := databases.DB().Exec("DELETE from users")
 		Expect(err).To(BeNil())
 		_, err = databases.DB().Query(`
 			INSERT INTO users (id, email, nickname, password_hash, created_at, updated_at) VALUES (
@@ -42,6 +39,30 @@ var _ = Describe("User", Ordered, func() {
 			);
 		`)
 		Expect(err).To(BeNil())
+	})
+
+	Describe("GetByID", func() {
+		It("should find a user by id in the db", func() {
+			// given
+			// when
+			user, err := userRepository.GetByID(ID)
+			// then
+			Expect(err).To(BeNil())
+			Expect(user).NotTo(BeNil())
+			Expect(user.ID).To(Equal(ID))
+			Expect(user.Email).To(Equal("a@gmail.com"))
+			Expect(user.Hash).To(Equal("hash"))
+			Expect(user.Nickname).To(Equal("nickname"))
+		})
+
+		It("GetByEmail shouldn't find a user by id in the db", func() {
+			// given
+			// when
+			user, err := userRepository.GetByEmail("invalidEmail")
+			// then
+			Expect(err).To(BeNil())
+			Expect(user).To(BeNil())
+		})
 	})
 
 	Describe("GetByEmail", func() {
@@ -58,7 +79,7 @@ var _ = Describe("User", Ordered, func() {
 			Expect(user.Nickname).To(Equal("nickname"))
 		})
 
-		It("GetByEmail should find a user by id in the db", func() {
+		It("GetByEmail shouldn't find a user by id in the db", func() {
 			// given
 			// when
 			user, err := userRepository.GetByEmail("invalidEmail")

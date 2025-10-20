@@ -1,7 +1,6 @@
 package math_operations
 
 import (
-	"encoding/json"
 	"mathly/internal/shared"
 	math_operations_events "mathly/internal/sockets/games/math_operations/events"
 
@@ -22,12 +21,10 @@ func (m mathOperations) broadcastGameEnd() {
 		scoreboard[m.config.Players[id].Nickname] = score
 	}
 
-	marshaledScoreboard, _ := json.Marshal(scoreboard)
-
 	m.config.Broadcast <- shared.CreateSocketResponse(
 		shared.EventLobby,
 		shared.LobbyEventEndOfGame,
-		string(marshaledScoreboard),
+		scoreboard,
 	)
 }
 
@@ -37,21 +34,18 @@ func (m mathOperations) broadcastScoreboard() {
 		scoreboard[m.config.Players[id].Nickname] = score
 	}
 
-	marshaledScoreboard, _ := json.Marshal(scoreboard)
 	m.config.Broadcast <- shared.CreateSocketResponse(
 		shared.EventGame,
 		shared.CommonGameEventScoreboard,
-		string(marshaledScoreboard),
+		scoreboard,
 	)
 }
 
 func (m mathOperations) broadcastQuestion() {
-	question, _ := json.Marshal(m.questions[0])
-
 	m.config.Broadcast <- shared.CreateSocketResponse(
 		shared.EventGame,
 		math_operations_events.MathOperationsEventQuestion,
-		string(question),
+		m.questions[0],
 	)
 }
 

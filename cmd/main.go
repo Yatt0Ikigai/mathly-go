@@ -40,9 +40,9 @@ func main() {
 
 	lobbyManager := sockets.NewLobbyManager(service, gameLib)
 	lobbySockets := controllers.NewLobbySockets(controllers.LobbySocketsControllerParameters{
-		Service:      service,
-		Databases:    databases,
-		LobbyManager: lobbyManager,
+		Service:        service,
+		LobbyManager:   lobbyManager,
+		UserRepository: repositories.User(),
 	})
 
 	lobbyRest := controllers.NewLobbyController(controllers.LobbyControllerParameters{
@@ -53,18 +53,18 @@ func main() {
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowMethods:     []string{"GET", "POST"},
+		AllowOrigins:     []string{"http://localhost:5173"}, // frontend URL,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Content-Type", "Content-Length", "Accept-Encoding", "Authorization", "Cache-Control"},
 		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers"},
 		AllowCredentials: true,
-		AllowAllOrigins:  true,
 		AllowWebSockets:  true,
 	}))
 
 	r.Use(CORSMiddleware())
 
-	oAuthController := auth.NewOAuthController(repositories.User(), service.JWT(), c.OAuth)
-	oAuthController.InitGoogleOAuth(r)
+	oAuthController := auth.NewAuthController(repositories.User(), service.JWT(), c.OAuth)
+	oAuthController.RegisterAuthEndpoints(r)
 	lobbySockets.RegisterLobbyHandlers(r)
 	lobbyRest.RegisterLobbyRestHandlers(r)
 
@@ -78,8 +78,23 @@ func main() {
 
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:2137")
+		origin := c.Request.Header.Get("Origin")
+
+		log.Log.Infof("%s Origin", origin)
+
+		// Allow requests from localhost frontend
+		if origin == "http://localhost:5173" {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+			c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
+			c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		}
+
+		// Handle preflight (OPTIONS) requests early
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
 
 		c.Next()
 	}

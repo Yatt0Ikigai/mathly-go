@@ -21,14 +21,14 @@ func (m mathOperations) endGame() {
 	m.broadcastGameEnd()
 }
 
-func (m mathOperations) HandleMessage(msg models.Message) {
+func (m *mathOperations) HandleMessage(msg models.Message) {
 	switch msg.Action {
 	case models.ActionTypeGuessAnswer:
 		m.handleAnswerMessage(msg)
 	}
 }
 
-func (m mathOperations) handleAnswerMessage(msg models.Message) {
+func (m *mathOperations) handleAnswerMessage(msg models.Message) {
 	p := m.findPlayerById(msg.SenderID)
 	if p == nil {
 		return // TODO

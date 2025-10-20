@@ -12,6 +12,7 @@ type Postgres interface {
 	Close() error
 	Query(query string, args ...any) (*sql.Rows, error)
 	QueryRow(query string, args ...any) *sql.Row
+	Exec(query string, args ...any) (sql.Result, error)
 
 	Health() error
 }
@@ -61,4 +62,8 @@ func (m postgres) QueryRow(query string, args ...any) *sql.Row {
 
 func (m postgres) Health() error {
 	return m.DB.Ping()
+}
+
+func (m postgres) Exec(query string, args ...any) (sql.Result, error) {
+	return m.DB.Exec(query, args...)
 }

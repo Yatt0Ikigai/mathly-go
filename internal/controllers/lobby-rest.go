@@ -3,6 +3,8 @@ package controllers
 import (
 	"net/http"
 
+	"mathly/internal/controllers/auth"
+	"mathly/internal/models"
 	"mathly/internal/repository"
 	"mathly/internal/service"
 	"mathly/internal/sockets"
@@ -35,13 +37,29 @@ func NewLobbyController(p LobbyControllerParameters) *lobbyController {
 }
 
 func (s *lobbyController) createLobby(c *gin.Context) {
-	lobby := s.lobbyManager.CreateLobby()
+	var data models.CreateLobbyRequest
+	err := c.BindJSON(&data)
+	if err != nil {
+		c.String(http.StatusBadRequest, "Not valid data")
+		return
+	}
+
+	lobby := s.lobbyManager.CreateLobby(data)
 
 	c.JSON(http.StatusOK, gin.H{
 		"lobbyID": lobby.GetID(),
 	})
 }
 
+func (s *lobbyController) obtainLobbies(c *gin.Context) {
+	lobbies := s.lobbyManager.ObtainLobbies()
+
+	c.JSON(http.StatusOK, lobbies)
+}
+
 func (s *lobbyController) RegisterLobbyRestHandlers(router gin.IRouter) {
-	router.POST("/create-lobby", s.createLobby)
+	protected := router.Group("/lobby")
+	protected.Use(auth.AuthMiddleware(s.service.JWT()))
+	protected.POST("", s.createLobby)
+	protected.GET("", s.obtainLobbies)
 }

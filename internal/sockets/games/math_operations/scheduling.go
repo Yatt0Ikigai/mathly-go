@@ -1,6 +1,7 @@
 package math_operations
 
 import (
+	"mathly/internal/log"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -31,7 +32,7 @@ func (m *mathOperations) removePlayerTurnJob(pId uuid.UUID) {
 }
 
 func (m *mathOperations) addPlayerTurnJob(pId uuid.UUID) {
-	task, _ := m.config.Scheduler.NewJob(
+	task, err := m.config.Scheduler.NewJob(
 		// TODO: add config for that
 		gocron.DurationJob(30*time.Second),
 		gocron.NewTask(func() {
@@ -39,6 +40,11 @@ func (m *mathOperations) addPlayerTurnJob(pId uuid.UUID) {
 		}),
 		gocron.WithLimitedRuns(1),
 	)
+
+	if err != nil {
+		log.Log.Errorf("Error scheduling turn for player %s: %v", pId, err)
+		return
+	}
 
 	taskId := task.ID()
 	m.events.PlayerTurns[pId] = &taskId
