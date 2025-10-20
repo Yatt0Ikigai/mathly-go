@@ -1,12 +1,9 @@
 package repository_test
 
 import (
-	// "mathly/internal/models"
 	"mathly/internal/models"
 	"mathly/internal/repository"
 	"time"
-
-	// "time"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -34,7 +31,7 @@ var _ = Describe("User", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		_, err := databases.DB().Query("DELETE from users")
+		_, err := databases.DB().Exec("DELETE from users")
 		Expect(err).To(BeNil())
 		_, err = databases.DB().Query(`
 			INSERT INTO users (id, email, nickname, password_hash, created_at, updated_at) VALUES (
